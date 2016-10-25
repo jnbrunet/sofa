@@ -57,6 +57,9 @@ SVDLinearSolver<TMatrix,TVector>::SVDLinearSolver()
     : f_verbose( initData(&f_verbose,false,"verbose","Dump system state at each iteration") )
     , f_minSingularValue( initData(&f_minSingularValue,(Real)1.0e-6,"minSingularValue","Thershold under which a singular value is set to 0, for the stabilization of ill-conditioned system.") )
     , f_conditionNumber( initData(&f_conditionNumber,(Real)0.0,"conditionNumber","Condition number of the matrix: ratio between the largest and smallest singular values. Computed in method solve.") )
+    , f_dump_M_output_filepath( initData(&f_dump_M_output_filepath, std::string(""), "matrix_output_filepath", "File path to output the matrix in MMFormat") )
+    , f_dump_x_output_filepath( initData(&f_dump_x_output_filepath, std::string(""), "solution_output_filepath", "File path to output the solution in MMFormat") )
+    , f_dump_b_output_filepath( initData(&f_dump_b_output_filepath, std::string(""), "rhs_output_filepath", "File path to output the right hand term of the equation in MMFormat") )
 {
 #ifdef DISPLAY_TIME
     timeStamp = 1.0 / (double)CTime::getRefTicksPerSec();
@@ -135,6 +138,74 @@ void SVDLinearSolver<TMatrix,TVector>::solve(Matrix& M, Vector& x, Vector& b)
         serr << "SVDLinearSolver<TMatrix,TVector>::solve, solution = " << sendl << x << sendl;
         serr << "SVDLinearSolver<TMatrix,TVector>::solve, verification, mx - b = " << sendl << (m * solution - rhs ).transpose() << sendl;
     }
+
+  if (!f_dump_M_output_filepath.getValue().empty()) {
+    std::ofstream fs(f_dump_M_output_filepath.getValue(), std::ios::out | std::ios::trunc);
+    if (fs.is_open()) {
+      Real count = 0;
+      for (unsigned i = 0; i < (unsigned) M.rowSize(); i++)
+        for (unsigned j = 0; j < (unsigned) M.colSize(); j++)
+          if (M[i][j] != 0)
+            ++count;
+
+      fs << "%%MatrixMarket matrix coordinate real general\n";
+      fs << M.rowSize() << " " << M.colSize() << " " << count << "\n";
+      for (unsigned i = 0; i < (unsigned) M.rowSize(); i++)
+        for (unsigned j = 0; j < (unsigned) M.colSize(); j++)
+          if (M[i][j] != 0)
+            fs << i+1 << " " << j+1 << " " << M[i][j] << "\n";
+      fs.flush();
+      fs.close();
+      std::cout<<"Matrix exported to file \"" << f_dump_M_output_filepath.getValue() << "\"\n";
+
+    } else {
+      serr << "SVDLinearSolver failed to open file " << f_dump_M_output_filepath.getValue() << "\n";
+    }
+  }
+
+  if (!f_dump_b_output_filepath.getValue().empty()) {
+    std::ofstream fs(f_dump_b_output_filepath.getValue(), std::ios::out | std::ios::trunc);
+    if (fs.is_open()) {
+      Real count = 0;
+      for (unsigned i = 0; i < (unsigned) M.rowSize(); i++)
+        if (b[i] != 0)
+          ++count;
+
+      fs << "%%MatrixMarket matrix coordinate real general\n";
+      fs << M.rowSize() << " " << 1 << " " << count << "\n";
+      for (unsigned i = 0; i < (unsigned) M.rowSize(); i++)
+        if (b[i] != 0)
+          fs << i+1 << " " << 1 << " " << b[i] << "\n";
+      fs.flush();
+      fs.close();
+      std::cout<<"Right hand term exported to file \"" << f_dump_b_output_filepath.getValue() << "\"\n";
+
+    } else {
+      serr << "SVDLinearSolver failed to open file " << f_dump_b_output_filepath.getValue() << "\n";
+    }
+  }
+
+  if (!f_dump_x_output_filepath.getValue().empty()) {
+    std::ofstream fs(f_dump_x_output_filepath.getValue(), std::ios::out | std::ios::trunc);
+    if (fs.is_open()) {
+      Real count = 0;
+      for (unsigned i = 0; i < (unsigned) M.rowSize(); i++)
+        if (x[i] != 0)
+          ++count;
+
+      fs << "%%MatrixMarket matrix coordinate real general\n";
+      fs << M.rowSize() << " " << 1 << " " << count << "\n";
+      for (unsigned i = 0; i < (unsigned) M.rowSize(); i++)
+        if (x[i] != 0)
+          fs << i+1 << " " << 1 << " " << x[i] << "\n";
+      fs.flush();
+      fs.close();
+      std::cout<<"Solution exported to file \"" << f_dump_x_output_filepath.getValue() << "\"\n";
+
+    } else {
+      serr << "SVDLinearSolver failed to open file " << f_dump_x_output_filepath.getValue() << "\n";
+    }
+  }
 }
 
 

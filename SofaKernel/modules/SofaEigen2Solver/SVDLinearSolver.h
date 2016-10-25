@@ -60,6 +60,10 @@ public:
 
     Data<bool> f_verbose;
     Data<Real> f_minSingularValue;
+
+    Data<std::string> f_dump_M_output_filepath; ///< File path to output the matrix in MMFormat
+    Data<std::string> f_dump_x_output_filepath; ///< File path to output the solution in MMFormat
+    Data<std::string> f_dump_b_output_filepath; ///< File path to output the right term of the equation in MMFormat
 protected:
     SVDLinearSolver();
 public:
