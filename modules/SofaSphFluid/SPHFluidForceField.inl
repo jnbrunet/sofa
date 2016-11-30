@@ -45,7 +45,6 @@ namespace forcefield
 template<class DataTypes>
 SPHFluidForceField<DataTypes>::SPHFluidForceField()
     : particleRadius	(initData(&particleRadius		,Real(1)		, "radius", "Radius of a Particle")),
-                    particleMass		(initData(&particleMass			,Real(1)		, "mass", "Mass of a Particle")),
                     pressureStiffness	(initData(&pressureStiffness	,Real(100)		, "pressure", "Pressure")),
                     density0			(initData(&density0				,Real(1)		, "density", "Density")),
                     viscosity			(initData(&viscosity			,Real(0.001f)	, "viscosity", "Viscosity")),
@@ -223,6 +222,10 @@ void SPHFluidForceField<DataTypes>::init()
         particles[i].curvature = 0;
     }
 
+    mass = this->mstate->getContext()->getMass();
+    if (!mass)
+      serr<<"Need a mass\n";
+
     lastTime = (Real)this->getContext()->getTime();
 }
 
@@ -253,11 +256,6 @@ void SPHFluidForceField<DataTypes>::addForce(const core::MechanicalParams* mpara
                      SPHKernel<SPH_KERNEL_CUBIC,Deriv> > (mparams, d_f, d_x, d_v);
         break;
     }
-    }
-    if (this->f_printLog.getValue())
-    {
-        sout << "density[" << 0 << "] = " << particles[0].density  << "(" << particles[0].neighbors.size() << " neighbors)"<< sendl;
-        sout << "density[" << particles.size()/2 << "] = " << particles[particles.size()/2].density << sendl;
     }
 }
 
@@ -365,8 +363,6 @@ void SPHFluidForceField<DataTypes>::computeForce(const core::MechanicalParams* /
 
     const Real h = particleRadius.getValue();
     const Real h2 = h*h;
-    const Real m = particleMass.getValue();
-    const Real m2 = m*m;
     const Real d0 = density0.getValue();
     //const int pE = pressureExponent.getValue();
     const Real k = pressureStiffness.getValue(); // /(pE); //*(Real)pow(d0,pE-1));
@@ -406,14 +402,14 @@ void SPHFluidForceField<DataTypes>::computeForce(const core::MechanicalParams* /
                 Particle& Pi = particles[i];
                 Real density = Pi.density;
 
-                density += m*Kd.W(0); // density from current particle
+                density += mass->getElementMass(i)*Kd.W(0); // density from current particle
 
                 for (typename std::vector< std::pair<int,Real> >::const_iterator it = Pi.neighbors.begin(); it != Pi.neighbors.end(); ++it)
                 {
                     const int j = it->first;
                     const Real r_h = it->second;
                     Particle& Pj = particles[j];
-                    Real d = m*Kd.W(r_h);
+                    Real d = mass->getElementMass(j)*Kd.W(r_h);
                     density += d;
                     Pj.density += d;
 
@@ -423,6 +419,17 @@ void SPHFluidForceField<DataTypes>::computeForce(const core::MechanicalParams* /
             }
         }
     }
+
+  if (this->f_printLog.getValue()) {
+    int neighborhood_size = 0;
+    double density = .0;
+    for (const Particle & p : particles) {
+      neighborhood_size+= p.neighbors.size();
+      density += p.density;
+    }
+    std::cout<<"Neighborhood mean size = "<<neighborhood_size/particles.size()<<"\t";
+    std::cout<<"Density mean = "<<density/particles.size()<<"\n";
+  }
 
     // Compute surface normal and curvature
     if (surfaceTensionType == 1)
@@ -435,10 +442,10 @@ void SPHFluidForceField<DataTypes>::computeForce(const core::MechanicalParams* /
                 const int j = it->first;
                 const Real r_h = it->second;
                 Particle& Pj = particles[j];
-                Deriv n = Kc.gradW(x[i]-x[j],r_h) * (m / Pj.density - m / Pi.density);
+                Deriv n = Kc.gradW(x[i]-x[j],r_h) * (mass->getElementMass(j) / Pj.density - mass->getElementMass(i) / Pi.density);
                 Pi.normal += n;
                 Pj.normal -= n;
-                Real c = Kc.laplacianW(r_h) * (m / Pj.density - m / Pi.density);
+                Real c = Kc.laplacianW(r_h) * (mass->getElementMass(j) / Pj.density - mass->getElementMass(i) / Pi.density);
                 Pi.curvature += c;
                 Pj.curvature -= c;
             }
@@ -460,7 +467,7 @@ void SPHFluidForceField<DataTypes>::computeForce(const core::MechanicalParams* /
                 Particle& Pj = particles[j];
                 // Pressure
 
-                Real pressureFV = ( - m2 * (Pi.pressure / (Pi.density*Pi.density) + Pj.pressure / (Pj.density*Pj.density)) );
+                Real pressureFV = ( - mass->getElementMass(i)*mass->getElementMass(j) * (Pi.pressure / (Pi.density*Pi.density) + Pj.pressure / (Pj.density*Pj.density)) );
 
                 // Viscosity
                 switch(viscosityT)
@@ -468,7 +475,7 @@ void SPHFluidForceField<DataTypes>::computeForce(const core::MechanicalParams* /
                 case 0: break;
                 case 1:
                 {
-                    Deriv fviscosity = ( v[j] - v[i] ) * ( m2 * viscosity / (Pi.density * Pj.density) * Kv.laplacianW(r_h) );
+                    Deriv fviscosity = ( v[j] - v[i] ) * ( mass->getElementMass(i)*mass->getElementMass(j) * viscosity / (Pi.density * Pj.density) * Kv.laplacianW(r_h) );
                     f[i] += fviscosity;
                     f[j] -= fviscosity;
                     break;
@@ -478,7 +485,7 @@ void SPHFluidForceField<DataTypes>::computeForce(const core::MechanicalParams* /
                     Real vx = dot(v[i]-v[j],x[i]-x[j]);
                     if (vx < 0)
                     {
-                        pressureFV += (vx * viscosity * h * m / ((r_h*r_h + 0.01f*h2)*(Pi.density+Pj.density)*0.5f));
+                        pressureFV += (vx * viscosity * h * mass->getElementMass(i)*mass->getElementMass(j) / ((r_h*r_h + 0.01f*h2)*(Pi.density+Pj.density)*0.5f));
                     }
                     break;
                 }
@@ -500,7 +507,7 @@ void SPHFluidForceField<DataTypes>::computeForce(const core::MechanicalParams* /
                 Real n = Pi.normal.norm();
                 if (n > 0.000001)
                 {
-                    Deriv fsurface = Pi.normal * ( - m * surfaceTension * Pi.curvature / n );
+                    Deriv fsurface = Pi.normal * ( - mass->getElementMass(i) * surfaceTension * Pi.curvature / n );
                     f[i] += fsurface;
                 }
                 break;

@@ -29,6 +29,7 @@
 #include <sofa/helper/system/config.h>
 #include <sofa/core/behavior/ForceField.h>
 #include <sofa/core/behavior/MechanicalState.h>
+#include <sofa/core/behavior/BaseMass.h>
 #include <SofaSphFluid/SpatialGridContainer.h>
 #include <sofa/helper/rmath.h>
 #include <vector>
@@ -452,7 +453,6 @@ public:
 
 public:
     Data< Real > particleRadius;
-    Data< Real > particleMass;
     Data< Real > pressureStiffness; ///< 100 - 1000 m2/s2
     Data< Real > density0; ///< 1000 kg/m3 for water
     Data< Real > viscosity;
@@ -462,6 +462,7 @@ public:
     Data< int > pressureType;
     Data< int > viscosityType;
     Data< int > surfaceTensionType;
+  sofa::core::behavior::BaseMass *mass;
 
 protected:
     struct Particle
@@ -542,8 +543,6 @@ protected:
 public:
     Real getParticleRadius() const { return particleRadius.getValue(); }
     void setParticleRadius(Real v) { particleRadius.setValue(v);    }
-    Real getParticleMass() const { return particleMass.getValue(); }
-    void setParticleMass(Real v) { particleMass.setValue(v);    }
     Real getPressureStiffness() const { return pressureStiffness.getValue(); }
     void setPressureStiffness(Real v) { pressureStiffness.setValue(v);    }
     Real getDensity0() const { return density0.getValue(); }
@@ -561,7 +560,7 @@ public:
 
     Real getParticleFieldConstant(Real h)
     {
-        return constWc(h)*particleMass.getValue();
+        return constWc(h)*mass->getElementMass(0);
     }
 
     virtual void init();
