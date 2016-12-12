@@ -73,7 +73,7 @@ AVFrame *VideoRecorder::alloc_picture(PixelFormat pix_fmt, int width, int height
     uint8_t *picture_buf;
     int size;
 
-    picture = avcodec_alloc_frame();
+    picture = av_frame_alloc();
     if (!picture)
         return NULL;
     size = avpicture_get_size(pix_fmt, width, height);
@@ -93,7 +93,7 @@ AVStream *VideoRecorder::add_video_stream(AVFormatContext *oc, AVCodecID codec_i
     AVCodecContext *c;
     AVStream *st;
 
-    st = av_new_stream(oc, 0);
+    st = avformat_new_stream(oc, 0);
     if (!st)
         return NULL;
 
@@ -147,7 +147,7 @@ AVStream *VideoRecorder::add_video_stream(AVFormatContext *oc, AVCodecID codec_i
             c->me_cmp |= FF_CMP_CHROMA;
 //            c->partitions |= X264_PART_I8X8 | X264_PART_I4X4 |
 //                    X264_PART_P8X8 | X264_PART_B8X8;
-            c->me_method = ME_HEX;
+//            c->me_method = ME_HEX;
 
             //c->gop_size = 250;
             c->keyint_min = 10;
@@ -182,7 +182,7 @@ AVStream *VideoRecorder::add_video_stream(AVFormatContext *oc, AVCodecID codec_i
             c->me_cmp |= FF_CMP_CHROMA;
 //            c->partitions |= X264_PART_I8X8 | X264_PART_I4X4 |
  //                   X264_PART_P8X8 | X264_PART_B8X8;
-            c->me_method = ME_HEX;
+//            c->me_method = ME_HEX;
 
             //c->gop_size = 250;
             c->keyint_min = 10;
@@ -316,21 +316,23 @@ bool VideoRecorder::write_delayed_video_frame(AVFormatContext *oc, AVStream *st)
 
     while (out_size > 0)
     {
-        out_size = avcodec_encode_video(c, videoOutbuf, videoOutbufSize, NULL);
-        if (out_size > 0)
+      AVPacket pkt;
+      av_init_packet(&pkt);
+
+      pkt.pts= av_rescale_q(c->coded_frame->pts, c->time_base, st->time_base);
+      if(c->coded_frame->key_frame)
+        pkt.flags |= AV_PKT_FLAG_KEY;
+      pkt.stream_index= st->index;
+      pkt.data= videoOutbuf;
+      pkt.size= videoOutbufSize;
+
+      int a = avcodec_encode_video2(c, &pkt, nullptr, nullptr);
+        if (a == 0)
         {
-            AVPacket pkt;
-            av_init_packet(&pkt);
-
-            pkt.pts= av_rescale_q(c->coded_frame->pts, c->time_base, st->time_base);
-            if(c->coded_frame->key_frame)
-                pkt.flags |= AV_PKT_FLAG_KEY;
-            pkt.stream_index= st->index;
-            pkt.data= videoOutbuf;
-            pkt.size= out_size;
-
             /* write the compressed frame in the media file */
-            ret = av_interleaved_write_frame(oc, &pkt);
+            ret += av_interleaved_write_frame(oc, &pkt);
+        }  else {
+          out_size = 0;
         }
     }
     if (ret != 0)

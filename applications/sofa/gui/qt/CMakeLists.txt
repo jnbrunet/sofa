@@ -205,4 +205,5 @@ endif()
 sofa_install_targets(SofaGui SofaGuiQt "")
 
 install(FILES ${HEADER_FILES} DESTINATION "include/sofa/gui/qt")
+install(FILES ${FORM_FILES} DESTINATION "include")
 install(FILES ${MOC_HEADER_FILES} DESTINATION "include/sofa/gui/qt")

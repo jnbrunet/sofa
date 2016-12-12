@@ -271,11 +271,11 @@ if(NOT SOFA_NO_OPENGL)
 endif()
 
 
- if(SOFA-EXTERNAL_FFMPEG)
+ if(SOFAGUI_HAVE_FFMPEG)
     list(APPEND HEADER_FILES gl/VideoRecorder.h)
 
     list(APPEND SOURCE_FILES "gl/VideoRecorder.cpp")
-        include_directories(${SOFA-EXTERNAL_FFMPEG_PATH}/include)
+
 endif()
 
 
@@ -299,7 +299,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${X11_X11_LIB})
     target_include_directories(${PROJECT_NAME} PRIVATE ${X11_X11_INCLUDE_PATH})
 endif()
-if(SOFA-EXTERNAL_FFMPEG)
+if(SOFAGUI_HAVE_FFMPEG)
         if (WIN32)
                  set( FFMPEG_LIBS
                  "${SOFA-EXTERNAL_FFMPEG_PATH}/lib/avformat.lib"
@@ -328,14 +328,14 @@ if(SOFA-EXTERNAL_FFMPEG)
                         find_library(ICONV iconv)
                         target_link_libraries(${PROJECT_NAME}  ${FFMPEG_LIBS} ${FOUNDATION} ${VIDEO} ${VIDEO_DECOD_ACC})
         elseif (UNIX)
-            AddLinkerDependencies(avcodec)
-                    AddLinkerDependencies(avformat)
-                        AddLinkerDependencies(avutil)
-                        AddLinkerDependencies(swscale)
-                        AddLinkerDependencies(avdevice)
-                        AddLinkerDependencies(avfilter)
-                        AddLinkerDependencies(swresample)
-                endif()
+            set( FFMPEG_LIBS
+                    "avcodec"
+                    "avformat"
+                    "avutil"
+                    "swscale"
+                    )
+            list(APPEND SOFAFRAMEWORK_DEPENDENCY_LINK ${FFMPEG_LIBS})
+        endif()
 
 endif()
 target_link_libraries(${PROJECT_NAME} PUBLIC ${SOFAFRAMEWORK_DEPENDENCY_LINK})

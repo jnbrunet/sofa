@@ -137,6 +137,13 @@ if(NOT SOFA_NO_OPENGL)
     endif()
 endif()
 
+## SOFA_GUI_FFMPEG
+option(SOFAGUI_HAVE_FFMPEG
+        "Enable FFMPEG support for recording." OFF)
+if(SOFAGUI_HAVE_FFMPEG)
+    set(SOFA_HAVE_FFMPEG 1) # cmakedefine
+endif()
+
 ## SofaGuiMain
 list(APPEND SOFAGUI_TARGETS SofaGuiMain)
 add_subdirectory(../applications/sofa/gui/SofaGuiMain ${CMAKE_CURRENT_BINARY_DIR}/SofaGuiMain)
