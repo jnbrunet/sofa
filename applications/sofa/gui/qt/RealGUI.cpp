@@ -311,6 +311,7 @@ RealGUI::RealGUI ( const char* viewername, const std::vector<std::string>& optio
     connect ( startButton, SIGNAL ( toggled ( bool ) ), this , SLOT ( playpauseGUI ( bool ) ) );
     connect ( ResetSceneButton, SIGNAL ( clicked() ), this, SLOT ( resetScene() ) );
     connect ( dtEdit, SIGNAL ( textChanged ( const QString& ) ), this, SLOT ( setDt ( const QString& ) ) );
+    connect ( computationTimeSamplingEdit, SIGNAL ( textChanged ( const QString& ) ), this, SLOT ( setComputationTimeSampling ( const QString& ) ) );
     connect ( realTimeCheckBox, SIGNAL ( stateChanged ( int ) ), this, SLOT ( updateDtEditState() ) );
     connect ( stepButton, SIGNAL ( clicked() ), this, SLOT ( step() ) );
     connect ( dumpStateCheckBox, SIGNAL ( toggled ( bool ) ), this, SLOT ( dumpState ( bool ) ) );
@@ -324,6 +325,10 @@ RealGUI::RealGUI ( const char* viewername, const std::vector<std::string>& optio
         connect ( timerIdle, SIGNAL ( timeout() ), this, SLOT ( emitIdle() ) );
         timerIdle->start(50) ;
     }
+
+    this->computationTimeSamplingEdit->setDisabled(!m_displayComputationTime);
+    this->computationTimeSamplingEdit->setText(QString::number(sofa::helper::AdvancedTimer::getInterval("Animate")));
+    this->computationTimeSamplingEdit->setValidator( new QIntValidator(0, 1000000, this) );
 
     this->setDockOptions(QMainWindow::AnimatedDocks | QMainWindow::AllowTabbedDocks);
     //dockWidget=new QDockWidget(tr(""), this);
@@ -2145,6 +2150,18 @@ void RealGUI::setDt(const QString& value)
 
 //------------------------------------
 
+void RealGUI::setComputationTimeSampling(const QString& value)
+{
+  const int computationTimeSampling = value.toInt();
+  if (computationTimeSampling != sofa::helper::AdvancedTimer::getInterval("Animate")) {
+    std::cout << "Changing timer interval to " << std::to_string(computationTimeSampling) << " steps" << std::endl;
+    sofa::helper::AdvancedTimer::clear();
+    sofa::helper::AdvancedTimer::setInterval("Animate", computationTimeSampling);
+  }
+}
+
+//------------------------------------
+
 // Reset the simulation to t=0
 void RealGUI::resetScene()
 {
@@ -2322,6 +2339,7 @@ void RealGUI::displayComputationTime ( bool value )
             std::cout << "Activating Timer" << std::endl;
         else
             std::cout << "Deactivating Timer" << std::endl;
+        this->computationTimeSamplingEdit->setDisabled(!value);
         sofa::helper::AdvancedTimer::setEnabled("Animate", value);
     }
 }

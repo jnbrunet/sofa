@@ -362,6 +362,7 @@ public slots:
     virtual void emitIdle();
     // virtual void setDt(double);
     virtual void setDt(const QString&);
+    virtual void setComputationTimeSampling(const QString& value);
     // Disable dtEdit when realTimeCheckBox is checked
     virtual void updateDtEditState();
     virtual void resetScene();

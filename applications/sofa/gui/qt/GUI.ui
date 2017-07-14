@@ -465,44 +465,91 @@
            </attribute>
            <layout class="QVBoxLayout" name="_21">
             <item>
-             <widget class="QCheckBox" name="dumpStateCheckBox">
-              <property name="toolTip">
-               <string comment="This is used to plut curves fter a simulation">Record the state at each time step in file &quot;dumpState.data&quot;</string>
-              </property>
-              <property name="text">
-               <string>Dump State</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="displayComputationTimeCheckBox">
-              <property name="toolTip">
-               <string>Display information about the time spent at each branch of the graph</string>
-              </property>
-              <property name="text">
-               <string>Log Time</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="exportGnuplotFilesCheckbox">
-              <property name="toolTip">
-               <string>Create gnuplot files for each named element of the simulation</string>
-              </property>
-              <property name="text">
-               <string>Export state as gnuplot files</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="exportVisitorCheckbox">
-              <property name="toolTip">
-               <string>Open a Dialog showing a trace of the execution and time spent</string>
-              </property>
-              <property name="text">
-               <string>Trace Visitor and Component execution</string>
-              </property>
-             </widget>
+             <layout class="QVBoxLayout" name="verticalLayout">
+              <item>
+               <widget class="QCheckBox" name="dumpStateCheckBox">
+                <property name="toolTip">
+                 <string comment="This is used to plut curves fter a simulation">Record the state at each time step in file &quot;dumpState.data&quot;</string>
+                </property>
+                <property name="text">
+                 <string>Dump State</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0,0">
+                <property name="spacing">
+                 <number>1</number>
+                </property>
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetMaximumSize</enum>
+                </property>
+                <item>
+                 <widget class="QCheckBox" name="displayComputationTimeCheckBox">
+                  <property name="toolTip">
+                   <string>Display information about the time spent at each branch of the graph</string>
+                  </property>
+                  <property name="text">
+                   <string>Log Time each </string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="computationTimeSamplingEdit">
+                  <property name="maximumSize">
+                   <size>
+                    <width>60</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="inputMethodHints">
+                   <set>Qt::ImhPreferNumbers</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label">
+                  <property name="text">
+                   <string> steps</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="exportGnuplotFilesCheckbox">
+                <property name="toolTip">
+                 <string>Create gnuplot files for each named element of the simulation</string>
+                </property>
+                <property name="text">
+                 <string>Export state as gnuplot files</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="exportVisitorCheckbox">
+                <property name="toolTip">
+                 <string>Open a Dialog showing a trace of the execution and time spent</string>
+                </property>
+                <property name="text">
+                 <string>Trace Visitor and Component execution</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="verticalSpacer_2">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
             </item>
            </layout>
           </widget>
