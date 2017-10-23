@@ -155,6 +155,11 @@ find_package(SofaGui REQUIRED)
 find_package(SofaGeneral REQUIRED)
 find_package(SofaMisc REQUIRED)
 
+GET_FILENAME_COMPONENT(LIBRARY_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}${PROJECT_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX} NAME_WE)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(LIBRARY_NAME ${LIBRARY_NAME}_d)
+endif()
+add_definitions("-DLIBRARY_NAME=${LIBRARY_NAME}")
 # TODO: Get rid of absolute paths in SofaPython
 add_definitions("-DSOFA_SRC_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/../../..\"")
 
@@ -175,7 +180,7 @@ if(${CMAKE_COMPILER_IS_GNUCC})
 endif()
 
 add_library(${PROJECT_NAME} SHARED ${HEADER_FILES} ${SOURCE_FILES} ${PYTHON_FILES})
-target_link_libraries(${PROJECT_NAME} PUBLIC SofaSimulationCommon SofaUserInteraction SofaGuiCommon SofaComponentMisc SofaComponentGeneral ${PythonLibs_Target})
+target_link_libraries(${PROJECT_NAME} PUBLIC SofaSimulationCommon SofaUserInteraction SofaGuiCommon SofaComponentMisc SofaComponentGeneral SofaSimulationGraph ${PythonLibs_Target})
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     # dlopen() is used on Linux for a workaround (see PythonEnvironnement.cpp)
     target_link_libraries(${PROJECT_NAME} PRIVATE dl)

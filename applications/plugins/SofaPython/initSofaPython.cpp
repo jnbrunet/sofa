@@ -23,6 +23,20 @@
 #include <SofaPython/config.h>
 #include "PythonEnvironment.h"
 
+#include <SofaSimulationCommon/init.h>
+#ifdef SOFA_HAVE_DAG
+#include <SofaSimulationGraph/init.h>
+#include <SofaSimulationGraph/DAGSimulation.h>
+#endif
+#include <SofaSimulationTree/init.h>
+#include <SofaSimulationTree/TreeSimulation.h>
+#include <SofaComponentCommon/initComponentCommon.h>
+#include <SofaComponentBase/initComponentBase.h>
+#include <SofaComponentGeneral/initComponentGeneral.h>
+#include <SofaComponentAdvanced/initComponentAdvanced.h>
+#include <SofaComponentMisc/initComponentMisc.h>
+#include "Binding_SofaModule.h"
+
 
 extern "C" {
 
@@ -72,3 +86,29 @@ SOFA_LINK_CLASS(PythonScriptDataEngine)
 /// register the loader in the factory
 const sofa::simulation::SceneLoader* loaderPY = sofa::simulation::SceneLoaderFactory::getInstance()->addEntry(new sofa::simulation::SceneLoaderPY());
 
+// create an entry point for dynamic loading of the plugin inside a Python program
+
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#define INIT_LIBRARY_A(NAME) extern "C" void init ##NAME (void)
+#define INIT_LIBRARY(NAME) INIT_LIBRARY_A(NAME)
+
+INIT_LIBRARY(LIBRARY_NAME)
+{
+    PyObject * libraryModule = Py_InitModule(TOSTRING(LIBRARY_NAME), NULL);
+
+    sofa::simulation::tree::init();
+#ifdef SOFA_HAVE_DAG
+    sofa::simulation::graph::init();
+#endif
+    sofa::component::initComponentBase();
+    sofa::component::initComponentCommon();
+    sofa::component::initComponentGeneral();
+    sofa::component::initComponentAdvanced();
+    sofa::component::initComponentMisc();
+
+
+    PyObject * sofaModule = Py_InitModule("Sofa", SofaModuleMethods);
+    bindSofaPythonModule(sofaModule);
+    PyModule_AddObject(libraryModule, "Sofa", sofaModule);
+}
