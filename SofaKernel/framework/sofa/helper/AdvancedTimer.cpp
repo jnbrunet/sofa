@@ -1230,16 +1230,81 @@ json TimerData::getJson(std::string stepNumber)
     int subComponantLevel = 0;
     std::stringstream ComposantId;
 
+    // Create the JSON container
+    jsonPointer = &jsonOutput[jsonObjectName];
+    temp = *jsonPointer;
+
+    if (!records.empty()) {
+        std::stack<std::reference_wrapper<json>> tokens;
+        std::reference_wrapper<json> token(temp["records"]);
+        tokens.push(token);
+        std::string name;
+        ctime_t t0;
+
+        for (unsigned int i = 0; i < records.size(); ++i) {
+            const Record& r = records[i];
+            switch(r.type)
+            {
+                case Record::RNONE:
+                    break;
+                case Record::RBEGIN: // Timer begins
+                    token = tokens.top();
+                    name = (std::string) AdvancedTimer::IdTimer(r.id);
+                    token = token.get()[name];
+                    t0 = r.time;
+                    token.get()["start_time"] = strToDouble(getTime(r.time - t0), 4);
+                    tokens.push(token);
+                    break;
+                case Record::REND: // Timer ends
+                    token = tokens.top();
+                    token.get()["end_time"] = strToDouble(getTime(r.time - t0),4);
+                    tokens.pop();
+                    break;
+                case Record::RSTEP_BEGIN: // Step begins
+                    token = tokens.top();
+                    name = (std::string) AdvancedTimer::IdStep(r.id);
+                    token = token.get()[name];
+                    token.get()["start_time"] = strToDouble(getTime(r.time - t0), 4);
+                    tokens.push(token);
+                    break;
+                case Record::RSTEP_END: // Step ends
+                    token = tokens.top();
+                    token.get()["end_time"] = strToDouble(getTime(r.time - t0), 4);
+                    tokens.pop();
+                    break;
+                case Record::RVAL_SET: // Sets a value
+                    token = tokens.top();
+                    name = (std::string) AdvancedTimer::IdVal(r.id);
+                    token.get()[name] = r.val;
+                    break;
+                case Record::RVAL_ADD: // Sets a value
+                    token = tokens.top();
+                    name = (std::string) AdvancedTimer::IdVal(r.id);
+                    token.get()[name] = r.val;
+                    break;
+                default:
+                    name = (std::string) AdvancedTimer::IdObj(r.id);
+                    token = tokens.top();
+                    token = token.get()[name];
+                    token.get()["start_time"] = r.time;
+                    break;
+            }
+        }
+
+        tokens.pop(); // Pop the last token ("records")
+
+        // The stack should be empty by now
+        if (!tokens.empty())
+            msg_error("AdvancedTimer::getJson") << "Records stack leaked.";
+
+    }
+
     if (!steps.empty())
     {
         // Clean the streamString
         ComposantId.str("");
         componantLevel = 0;
         subComponantLevel = 0;
-
-        // Create the JSON container
-        jsonPointer = &jsonOutput[jsonObjectName];
-        temp = *jsonPointer;
 
         for (unsigned int s=0; s<steps.size(); s++)
         {
