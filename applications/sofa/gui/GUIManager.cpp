@@ -48,6 +48,7 @@ BaseGUI* GUIManager::currentGUI = NULL;
 std::list<GUIManager::GUICreator> GUIManager::guiCreators;
 const char* GUIManager::valid_guiname = NULL;
 ArgumentParser* GUIManager::currentArgumentParser = NULL;
+std::string  GUIManager::sofa_prefix;
 
 
 BaseGUI* GUIManager::getGUI()
@@ -206,8 +207,11 @@ int GUIManager::Init(const char* argv0, const char* name)
         first = false;
     }
 
+    if (sofa_prefix.empty())
+        sofa_prefix = Utils::getSofaPathPrefix();
+
     // Read the paths to the share/ and examples/ directories from etc/sofa.ini,
-    const std::string etcDir = Utils::getSofaPathPrefix() + "/etc";
+    const std::string etcDir = sofa_prefix + "/etc";
     const std::string sofaIniFilePath = etcDir + "/sofa.ini";
     std::map<std::string, std::string> iniFileValues = Utils::readBasicIniFile(sofaIniFilePath);
 
@@ -301,6 +305,14 @@ void GUIManager::SetScene(sofa::simulation::Node::SPtr groot, const char* filena
         currentGUI->configureGUI(groot);
     }
 
+}
+
+void GUIManager::SetSofaPrefix(const char* path) {
+    sofa_prefix = path;
+}
+
+const char * GUIManager::GetSofaPrefix() {
+    return sofa_prefix.c_str();
 }
 
 int GUIManager::MainLoop(sofa::simulation::Node::SPtr groot, const char* filename)

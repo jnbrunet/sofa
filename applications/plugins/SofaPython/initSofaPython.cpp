@@ -35,6 +35,7 @@
 #include <SofaComponentGeneral/initComponentGeneral.h>
 #include <SofaComponentAdvanced/initComponentAdvanced.h>
 #include <SofaComponentMisc/initComponentMisc.h>
+#include <sofa/gui/Main.h>
 #include "Binding_SofaModule.h"
 
 
@@ -106,6 +107,7 @@ INIT_LIBRARY(LIBRARY_NAME)
     sofa::component::initComponentGeneral();
     sofa::component::initComponentAdvanced();
     sofa::component::initComponentMisc();
+    sofa::gui::initMain();
 
 
     PyObject * sofaModule = Py_InitModule("Sofa", SofaModuleMethods);

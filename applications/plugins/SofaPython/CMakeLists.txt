@@ -30,6 +30,7 @@ set(HEADER_FILES
     Binding_DisplayFlagsData.h
     Binding_OptionsGroupData.h
     Binding_GridTopology.h
+    Binding_GUIManager.h
     Binding_LinearSpring.h
     Binding_Link.h
     Binding_Mapping.h
@@ -92,6 +93,7 @@ set(SOURCE_FILES
     Binding_DisplayFlagsData.cpp
     Binding_OptionsGroupData.cpp
     Binding_GridTopology.cpp
+    Binding_GUIManager.cpp
     Binding_LinearSpring.cpp
     Binding_Link.cpp
     Binding_Mapping.cpp
@@ -182,7 +184,7 @@ if(${CMAKE_COMPILER_IS_GNUCC})
 endif()
 
 add_library(${PROJECT_NAME} SHARED ${HEADER_FILES} ${SOURCE_FILES} ${PYTHON_FILES})
-target_link_libraries(${PROJECT_NAME} PUBLIC SofaSimulationCommon SofaUserInteraction SofaGuiCommon SofaComponentMisc SofaComponentGeneral SofaSimulationGraph ${PythonLibs_Target})
+target_link_libraries(${PROJECT_NAME} PUBLIC SofaSimulationCommon SofaUserInteraction SofaGuiCommon SofaGuiMain SofaComponentMisc SofaComponentGeneral SofaSimulationGraph ${PythonLibs_Target})
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     # dlopen() is used on Linux for a workaround (see PythonEnvironnement.cpp)
     target_link_libraries(${PROJECT_NAME} PRIVATE dl)
