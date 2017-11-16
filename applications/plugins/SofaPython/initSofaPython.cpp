@@ -37,6 +37,7 @@
 #include <SofaComponentMisc/initComponentMisc.h>
 #include <sofa/gui/Main.h>
 #include "Binding_SofaModule.h"
+#include <sofa/helper/system/PluginManager.h>
 
 
 extern "C" {
@@ -96,6 +97,18 @@ const sofa::simulation::SceneLoader* loaderPY = sofa::simulation::SceneLoaderFac
 
 INIT_LIBRARY(LIBRARY_NAME)
 {
+    sofa::helper::system::Plugin p;
+    p.permanent = true;
+    p.initExternalModule.func      = &initExternalModule;
+    p.getModuleVersion.func        = &getModuleVersion;
+    p.getModuleComponentList.func  = &getModuleComponentList;
+    p.getModuleName.func           = &getModuleName;
+    p.getModuleDescription.func    = &getModuleDescription;
+    p.getModuleLicense.func        = &getModuleLicense;
+    std::string pluginPath = TOSTRING(LIBRARY_NAME) + std::string(".so");
+    sofa::helper::system::PluginManager::getInstance().addPlugin(pluginPath, p);
+
+
     PyObject * libraryModule = Py_InitModule(TOSTRING(LIBRARY_NAME), NULL);
 
     sofa::simulation::tree::init();
