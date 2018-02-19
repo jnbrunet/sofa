@@ -126,4 +126,6 @@ INIT_LIBRARY(LIBRARY_NAME)
     PyObject * sofaModule = Py_InitModule("Sofa", SofaModuleMethods);
     bindSofaPythonModule(sofaModule);
     PyModule_AddObject(libraryModule, "Sofa", sofaModule);
+
+    sofa::simulation::SceneLoaderFactory::getInstance()->removeEntry(loaderPY);
 }

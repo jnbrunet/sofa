@@ -132,6 +132,9 @@ public:
     /// Add a scene loader
     SceneLoader* addEntry(SceneLoader *loader);
 
+    /// Remove a scene loader
+    void removeEntry(const SceneLoader *loader);
+
     /// Get the list of loaders
     SceneLoaderList* getEntries() {return &registry;}
 
