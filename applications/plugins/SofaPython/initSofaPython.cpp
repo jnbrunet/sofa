@@ -38,6 +38,7 @@
 #include <sofa/gui/Main.h>
 #include "Binding_SofaModule.h"
 #include <sofa/helper/system/PluginManager.h>
+#include <sofa/helper/BackTrace.h>
 
 
 extern "C" {
@@ -97,6 +98,8 @@ const sofa::simulation::SceneLoader* loaderPY = sofa::simulation::SceneLoaderFac
 
 INIT_LIBRARY(LIBRARY_NAME)
 {
+    sofa::helper::BackTrace::autodump();
+
     sofa::helper::system::Plugin p;
     p.permanent = true;
     p.initExternalModule.func      = &initExternalModule;
