@@ -28,6 +28,7 @@
 #include <sofa/simulation/MechanicalOperations.h>
 #include <sofa/simulation/VectorOperations.h>
 #include <sofa/core/ObjectFactory.h>
+#include <sofa/helper/AdvancedTimer.h>
 #include <math.h>
 #include <iostream>
 
@@ -57,6 +58,7 @@ StaticSolver::StaticSolver()
 
 void StaticSolver::solve(const core::ExecParams* params, SReal dt, sofa::core::MultiVecCoordId xResult, sofa::core::MultiVecDerivId /*vResult*/)
 {
+    sofa::helper::AdvancedTimer::stepBegin("StaticSolver::Solve");
     sofa::simulation::common::VectorOperations vop( params, this->getContext() );
     sofa::simulation::common::MechanicalOperations mop( params, this->getContext() );
     MultiVecCoord pos(&vop, core::VecCoordId::position() );
@@ -77,12 +79,12 @@ void StaticSolver::solve(const core::ExecParams* params, SReal dt, sofa::core::M
     mop.projectResponse(force);         // b is projected to the constrained space
     //    b.teq(-1);
 
-    dmsg_info() << "StaticSolver, f0 = "<< force ;
+//    dmsg_info() << "StaticSolver, f0 = "<< force ;
     core::behavior::MultiMatrix<simulation::common::MechanicalOperations> matrix(&mop);
     //matrix = MechanicalMatrix::K;
     matrix = MechanicalMatrix(massCoef.getValue(),dampingCoef.getValue(),stiffnessCoef.getValue());
 
-    dmsg_info() <<" matrix = "<< (MechanicalMatrix::K) << " = " << matrix ;
+//    dmsg_info() <<" matrix = "<< (MechanicalMatrix::K) << " = " << matrix ;
 
     matrix.solve(x,force);
     // x is the opposite solution of the system
@@ -91,7 +93,7 @@ void StaticSolver::solve(const core::ExecParams* params, SReal dt, sofa::core::M
     /*    serr<<"StaticSolver::solve, nb iter = "<<nb_iter<<sendl;
      serr<<"StaticSolver::solve, solution = "<<x<<sendl;*/
 
-    dmsg_info() <<" opposite solution = "<< x ;
+//    dmsg_info() <<" opposite solution = "<< x ;
 
     if(applyIncrementFactor.getValue()==true )
         pos2.eq( pos, x, -dt );
@@ -100,6 +102,15 @@ void StaticSolver::solve(const core::ExecParams* params, SReal dt, sofa::core::M
 
     mop.solveConstraint(pos2, core::ConstraintParams::POS);
 
+    SReal f_norm = sqrt(force.dot(force));
+    SReal dx_norm = sqrt(x.dot(x));
+
+    msg_info() << "Step # " << this->getTime() << " : |f - K(x0 + dx)| = " << f_norm << " |dx| = " << dx_norm;
+
+
+    sofa::helper::AdvancedTimer::valSet("residual", f_norm);
+    sofa::helper::AdvancedTimer::valSet("correction", dx_norm);
+    sofa::helper::AdvancedTimer::stepEnd("StaticSolver::Solve");
 }
 
 int StaticSolverClass = core::RegisterObject("A solver which seeks the static equilibrium of the scene it monitors")
