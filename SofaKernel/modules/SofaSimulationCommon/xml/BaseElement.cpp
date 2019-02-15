@@ -41,14 +41,14 @@ namespace xml
 {
 
 BaseElement::BaseElement(const std::string& name, const std::string& type, BaseElement* newParent)
-    : BaseObjectDescription(name.c_str(), type.c_str()), parent(NULL), includeNodeType(INCLUDE_NODE_CHILD)
+    : BaseObjectDescription(name.c_str(), type.c_str()), parent(nullptr), includeNodeType(INCLUDE_NODE_CHILD)
 {
-    if (newParent!=NULL) newParent->addChild(this);
+    if (newParent != nullptr) newParent->addChild(this);
 }
 
 BaseElement::~BaseElement()
 {
-    for (ChildList::iterator it = children.begin();
+    for (auto it = children.begin();
             it != children.end(); ++it)
     {
         delete *it;
@@ -57,49 +57,49 @@ BaseElement::~BaseElement()
 }
 
 /// Get the file where this description was read from. Useful to resolve relative file paths.
-std::string BaseElement::getBaseFile()
+std::string BaseElement::getBaseFile() const noexcept
 {
     if (isFileRoot()) return basefile;
-    else if (getParentElement()!=NULL) return getParentElement()->getBaseFile();
+    else if (getParentElement() != nullptr) return getParentElement()->getBaseFile();
     else return "";
 }
 
-void BaseElement::setBaseFile(const std::string& newBaseFile)
+void BaseElement::setBaseFile(const std::string & newBaseFile)
 {
     basefile = newBaseFile;
 }
 
 /// Return true if this element was the root of the file
-bool BaseElement::isFileRoot()
+bool BaseElement::isFileRoot() const noexcept
 {
-    return !basefile.empty();
+    return (not basefile.empty());
 }
 
-const std::string& BaseElement::getSrcFile() const {
+const std::string& BaseElement::getSrcFile() const noexcept {
     return m_srcfile ;
 }
 
-void BaseElement::setSrcFile(const std::string& filename) {
+void BaseElement::setSrcFile(const std::string & filename) noexcept {
     m_srcfile = filename ;
 }
 
-int BaseElement::getSrcLine() const {
+int BaseElement::getSrcLine() const noexcept {
     return m_srcline ;
 }
 
-void BaseElement::setSrcLine(const int l)
+void BaseElement::setSrcLine(const long int l) noexcept
 {
     m_srcline = l ;
 }
 
-bool BaseElement::presenceAttribute(const std::string& s)
+bool BaseElement::presenceAttribute(const std::string& s) const
 {
     return (attributes.find(s) != attributes.end());
 }
 /// Remove an attribute. Fails if this attribute is "name" or "type"
 bool BaseElement::removeAttribute(const std::string& attr)
 {
-    AttributeMap::iterator it = attributes.find(attr);
+    auto it = attributes.find(attr);
     if (it == attributes.end())
         return false;
     attributes.erase(it);
@@ -116,7 +116,7 @@ bool BaseElement::addChild(BaseElement* child)
     if (child->getParent()==this) return false;
     BaseElement* oldParent =  child->getParentElement();
     if (!child->setParent(this)) return false;
-    if (oldParent != NULL)
+    if (oldParent != nullptr)
     {
         oldParent->removeChild(child);
     }
@@ -127,12 +127,12 @@ bool BaseElement::addChild(BaseElement* child)
 bool BaseElement::removeChild(BaseElement* child)
 {
     if (child->getParent()!=this) return false;
-    ChildList::iterator it = children.begin();
+    auto it = children.begin();
     while (it!=children.end())
     {
         if (*it == child)
         {
-            child->setParent(NULL);
+            child->setParent(nullptr);
             children.erase(it);
             return true;
         }
@@ -159,10 +159,10 @@ BaseElement* BaseElement::Create(const std::string& nodeClass, const std::string
 /// Find a node given its name
 BaseElement* BaseElement::findNode(const char* nodeName, bool absolute)
 {
-    if (nodeName == NULL) return NULL;
+    if (nodeName == nullptr) return nullptr;
     if (nodeName[0]=='\\' || nodeName[0]=='/')
     {
-        if (!absolute && getParentElement()!=NULL)
+        if (!absolute && getParentElement()!=nullptr)
             return getParentElement()->findNode(nodeName);
         else
         { ++nodeName; absolute = true; }
@@ -170,7 +170,7 @@ BaseElement* BaseElement::findNode(const char* nodeName, bool absolute)
     if (nodeName[0]=='\0')
     {
         if (absolute) return this;
-        else return NULL;
+        else return nullptr;
     }
     const char* sep = nodeName;
     while (*sep!='\0' && *sep!='\\' && *sep!='/')
@@ -179,7 +179,7 @@ BaseElement* BaseElement::findNode(const char* nodeName, bool absolute)
         return findNode(sep, true);
     if (!strncmp(nodeName,"..",sep-nodeName))
     {
-        if (getParentElement()==NULL) return NULL;
+        if (getParentElement()==nullptr) return nullptr;
         else return getParentElement()->findNode(sep,true);
     }
     for (child_iterator<> it = begin(); it != end(); ++it)
@@ -187,13 +187,13 @@ BaseElement* BaseElement::findNode(const char* nodeName, bool absolute)
         if (it->getName().length() == (unsigned)(sep-nodeName) && !strncmp(it->getName().c_str(), nodeName, sep-nodeName))
         {
             BaseElement* res = it->findNode(sep,true);
-            if (res!=NULL) return res;
+            if (res!=nullptr) return res;
         }
     }
-    if (!absolute && getParentElement()!=NULL)
+    if (!absolute && getParentElement()!=nullptr)
         return getParentElement()->findNode(nodeName);
     else
-        return NULL;
+        return nullptr;
 }
 
 } // namespace xml

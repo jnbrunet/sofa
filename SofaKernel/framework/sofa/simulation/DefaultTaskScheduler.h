@@ -84,17 +84,17 @@ namespace sofa  {
 
             void workUntilDone(Task::Status* status);
 
-            Task::Status* getCurrentStatus() const { return _currentStatus; }
+            Task::Status* getCurrentStatus() const noexcept { return _currentStatus; }
 
-            const char* getName() { return _name.c_str(); }
+            const char* getName() const noexcept { return _name.c_str(); }
 
-            const size_t getIndex() { return _index; }
+            size_t getIndex() const noexcept { return _index; }
 
-            const std::thread::id getId();
+            const std::thread::id getId() const noexcept;
 
             const std::deque<Task*>* getTasksQueue() { return &_tasks; }
 
-            std::uint64_t getTaskCount() { return _tasks.size(); }
+            std::uint64_t getTaskCount() const noexcept { return _tasks.size(); }
 
             int GetWorkerIndex();
 
@@ -128,7 +128,7 @@ namespace sofa  {
             //void	ThreadProc(void);
             void	Idle(void);
 
-            bool isFinished();
+            bool isFinished() const noexcept;
 
         private:
 

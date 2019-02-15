@@ -66,34 +66,34 @@ public:
 
     typedef std::map<std::string,Attribute> AttributeMap;
 
-    BaseObjectDescription(const char* name=NULL, const char* type=NULL);
-
-    virtual ~BaseObjectDescription();
+    BaseObjectDescription(const std::string & name, const std::string & type);
+    BaseObjectDescription() = default;
 
     /// Get the associated object (or NULL if it is not created yet)
     virtual Base* getObject();
+    virtual const Base* getObject() const;
 
     /// Get the object instance name
-    virtual std::string getName();
+    virtual std::string getName() const noexcept;
 
     /// Set the object instance name
     virtual void setName(const std::string& name);
 
     /// Get the parent node
-    virtual BaseObjectDescription* getParent() const;
+    virtual BaseObjectDescription * getParent();
+    virtual const BaseObjectDescription * getParent() const;
 
     /// Get the file where this description was read from. Useful to resolve relative file paths.
-    virtual std::string getBaseFile();
+    virtual std::string getBaseFile() const noexcept;
 
     ///// Get all attribute data, read-only
-    virtual const AttributeMap& getAttributeMap() const;
+    virtual const AttributeMap& getAttributeMap() const noexcept;
 
     ///// Get list of all attributes
     template<class T> void getAttributeList(T& container) const
     {
-        for (AttributeMap::const_iterator it = attributes.begin();
-                it != attributes.end(); ++it)
-            container.push_back(it->first);
+        for (const auto & attribute : attributes)
+            container.push_back(attribute.first);
     }
 
     /// Find an object description given its name (relative to this object)
@@ -102,18 +102,70 @@ public:
     /// Find an object given its name (relative to this object)
     virtual Base* findObject(const char* nodeName);
 
-    /// Get an attribute given its name (return defaultVal if not present)
+    [[deprecated("since 19.06, replaced by a templated version with similar name. Will be removed in 20.06")]]
     virtual const char* getAttribute(const std::string& attr, const char* defaultVal=NULL);
 
+    /// Get the string representation of the attribute's value given its name,
+    /// or defaultValue if the attribute doesn't exist.
+    virtual std::string getAttribute(const std::string & name, const std::string & defaultValue) const noexcept;
+
+    /// Get the string representation of the attribute's value given its name.
+    /// @throws std::out_of_range when the attribute's name doesn't exist.
+    virtual std::string getAttribute(const std::string & name) const;
+
+    /// Get the value of an attribute given its name.
+    /// @throws std::out_of_range when the attribute's name doesn't exist.
+    /// @throws std::runtime_error when the attribute's value cannot be converted to type T.
+    template < typename T >
+    T getAttributeAs(const std::string & name) const
+    {
+        if (not hasAttribute(name))
+            throw std::out_of_range("Trying to access an attribute named '" + name +
+                                    "', but such attribute does not exist in the current object '" + getName() + "'");
+
+        T value;
+        std::stringstream value_as_string (attributes.at(name));
+
+        // Set the numeric locale to classic "C" to force the dot '.' as the decimal separator.
+        value_as_string.imbue(std::locale(std::locale(), std::locale::classic(), LC_NUMERIC));
+
+        value_as_string >> value;
+
+        if (value_as_string.fail()) {
+            throw std::runtime_error ("Failed to convert the value '" + value_as_string.str() +
+                                      "' to the type '" + typeid(T).name() + "'.");
+        }
+
+        return value;
+    }
+
+    /// Get the value of an attribute given its name, or defaultValue if the attribute doesn't exist.
+    /// @throws std::runtime_error when the attribute's value cannot be converted to type T.
+    template < typename T >
+    T getAttributeAs(const std::string & name, const T & defaultValue) const
+    {
+        if (not hasAttribute(name))
+            return defaultValue;
+        else
+            return getAttributeAs<T>(name);
+    }
+
+
+
     /// Get an attribute converted to a float given its name.
-    /// returns defaultVal if not present or in case the attribute cannot be parsed totally
+    /// returns defaultValue if not present or in case the attribute cannot be parsed totally
     /// adds a message in the logError if the attribute cannot be totally parsed.
-    virtual float getAttributeAsFloat(const std::string& attr, const float defaultVal=0.0);
+    [[deprecated("since 19.06, replaced by the templated function getAttributeAs. Will be removed in 20.06")]]
+    virtual float getAttributeAsFloat(const std::string& name, float defaultValue=0.0);
 
     /// Get an attribute converted to a int given its name.
     /// returns defaultVal if not present or in case the attribute cannot be parsed totally
     /// adds a message in the logError if the attribute cannot be totally parsed.
-    virtual int getAttributeAsInt(const std::string& attr, const int defaultVal=0.0) ;
+    [[deprecated("since 19.06, replaced by the templated function getAttributeAs. Will be removed in 20.06")]]
+    virtual long int getAttributeAsInt(const std::string& attr, long int defaultVal=0);
+
+    /// Check whether or not the object has an attribute of a given name
+    virtual bool hasAttribute(const std::string & name) const noexcept;
 
     [[deprecated("since 18.12, replaced by a pure c++ version with similar name. Will be removed in 19.12")]]
     virtual void setAttribute(const std::string& attr, const char* val);
@@ -125,7 +177,7 @@ public:
     virtual bool removeAttribute(const std::string& attr);
 
     /// Get the full name of this object (i.e. concatenation if all the names of its ancestors and itself)
-    virtual std::string getFullName();
+    virtual std::string getFullName() const;
 
     virtual void logError(std::string s) {errors.push_back(s);}
 

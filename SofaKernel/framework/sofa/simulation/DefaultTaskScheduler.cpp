@@ -228,7 +228,7 @@ namespace sofa
             _finished = true;
 		}
 
-        bool WorkerThread::isFinished()
+        bool WorkerThread::isFinished() const noexcept
         {
             return _finished;
         }
@@ -288,7 +288,7 @@ namespace sofa
 			return;
 		}
 
-        const std::thread::id WorkerThread::getId()
+        const std::thread::id WorkerThread::getId() const noexcept
         {
             return _stdThread.get_id();
         }

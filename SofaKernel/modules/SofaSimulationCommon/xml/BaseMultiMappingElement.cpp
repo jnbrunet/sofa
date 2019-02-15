@@ -33,7 +33,7 @@ namespace simulation
 {
 namespace xml
 {
-BaseMultiMappingElement::BaseMultiMappingElement(const std::string& name, const std::string& type, BaseElement* parent/* =NULL */)
+BaseMultiMappingElement::BaseMultiMappingElement(const std::string& name, const std::string& type, BaseElement* parent)
     :ObjectElement(name,type,parent)
 {
 
@@ -50,8 +50,8 @@ bool BaseMultiMappingElement::initNode()
     {
 
         BaseMapping* multimapping = this->getTypedObject()->toBaseMapping();
-        NodeElement* currentNodeElement = dynamic_cast<NodeElement *>(getParent());
-        simulation::Node* currentNode =  dynamic_cast<simulation::Node* >( currentNodeElement->getTypedObject() );
+        auto currentNodeElement = dynamic_cast<NodeElement *>(getParent());
+        auto currentNode =  dynamic_cast<simulation::Node* >( currentNodeElement->getTypedObject() );
         helper::vector<core::BaseState*> inputStates  = multimapping->getFrom();
         helper::vector<core::BaseState*> outputStates = multimapping->getTo();
 
@@ -62,14 +62,14 @@ bool BaseMultiMappingElement::initNode()
         /* get the Nodes corresponding to each input BaseState context */
         for( iterState = inputStates.begin();  iterState != inputStates.end(); ++iterState)
         {
-            simulation::Node* node = dynamic_cast< simulation::Node* >((*iterState)->getContext());
+            auto node = dynamic_cast< simulation::Node* >((*iterState)->getContext());
             inputNodes.push_back(node);
         }
-        /* */
+
         /* get the Nodes corresponding to each output BaseState context */
         for( iterState = outputStates.begin(); iterState != outputStates.end(); ++iterState)
         {
-            simulation::Node* node = dynamic_cast< simulation::Node* >((*iterState)->getContext());
+            auto node = dynamic_cast< simulation::Node* >((*iterState)->getContext());
             outputNodes.push_back(node);
         }
 
@@ -79,8 +79,8 @@ bool BaseMultiMappingElement::initNode()
         /* filter out inputNodes which already belong to the currentNode ancestors */
         helper::vector<simulation::Node*> otherInputNodes;
         helper::vector<simulation::Node*> ancestorInputNodes;
-        iterNode = inputNodes.begin();
         currentBaseNode = currentNode;
+
         for( iterNode = inputNodes.begin(); iterNode != inputNodes.end(); ++iterNode)
         {
             if( !currentBaseNode->hasAncestor(*iterNode) )

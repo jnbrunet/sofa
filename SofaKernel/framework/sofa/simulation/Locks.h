@@ -71,8 +71,6 @@ namespace sofa
         private:
             
             std::atomic_flag _flag = ATOMIC_FLAG_INIT;
-            
-            char _pad [CACHE_LINE - sizeof(std::atomic_flag)];
         };
         
         

@@ -38,28 +38,24 @@ using namespace sofa::defaulttype;
 
 void CubeTopology::parse(core::objectmodel::BaseObjectDescription* arg)
 {
-    this->MeshTopology::parse(arg);
-    float scale=1.0f;
-    if (arg->getAttribute("scale")!=NULL)
-    {
-        scale = arg->getAttributeAsFloat("scale",1.0);
-    }
+    MeshTopology::parse(arg);
+    auto scale = arg->getAttributeAs<SReal> ("scale", 1.0);
     this->setSize();
-    if (arg->getAttribute("xmin") != NULL &&
-        arg->getAttribute("ymin") != NULL &&
-        arg->getAttribute("zmin") != NULL &&
-        arg->getAttribute("xmax") != NULL &&
-        arg->getAttribute("ymax") != NULL &&
-        arg->getAttribute("zmax") != NULL )
+    if (arg->hasAttribute("xmin") &&
+        arg->hasAttribute("ymin") &&
+        arg->hasAttribute("zmin") &&
+        arg->hasAttribute("xmax") &&
+        arg->hasAttribute("ymax") &&
+        arg->hasAttribute("zmax") )
     {
-        float xmin = arg->getAttributeAsFloat("xmin",0);
-        float ymin = arg->getAttributeAsFloat("ymin",0);
-        float zmin = arg->getAttributeAsFloat("zmin",0);
-        float xmax = arg->getAttributeAsFloat("xmax",1);
-        float ymax = arg->getAttributeAsFloat("ymax",1);
-        float zmax = arg->getAttributeAsFloat("zmax",1);
-        min.setValue(Vector3((SReal)(xmin*scale), (SReal)(ymin*scale), (SReal)(zmin*scale)));
-        max.setValue(Vector3((SReal)(xmax*scale), (SReal)(ymax*scale), (SReal)(zmax*scale)));
+        auto xmin = arg->getAttributeAs<SReal> ("xmin", 0);
+        auto ymin = arg->getAttributeAs<SReal> ("ymin", 0);
+        auto zmin = arg->getAttributeAs<SReal> ("zmin", 0);
+        auto xmax = arg->getAttributeAs<SReal> ("xmax", 1);
+        auto ymax = arg->getAttributeAs<SReal> ("ymax", 1);
+        auto zmax = arg->getAttributeAs<SReal> ("zmax", 1);
+        min.setValue(Vector3(xmin*scale, ymin*scale, zmin*scale));
+        max.setValue(Vector3(xmax*scale, ymax*scale, zmax*scale));
     }
     this->setPos(min.getValue()[0],max.getValue()[0],min.getValue()[1],max.getValue()[1],min.getValue()[2],max.getValue()[2]);
 }
@@ -99,13 +95,13 @@ void CubeTopology::setSize(int nx, int ny, int nz)
 
 void CubeTopology::init()
 {
-    this->MeshTopology::init();
+    MeshTopology::init();
     setSize();
 }
 
 void CubeTopology::reinit()
 {
-    this->MeshTopology::reinit();
+    MeshTopology::reinit();
     setSize();
 }
 

@@ -42,13 +42,9 @@ NodeElement::NodeElement(const std::string& name, const std::string& type, BaseE
 {
 }
 
-NodeElement::~NodeElement()
-{
-}
-
 bool NodeElement::setParent(BaseElement* newParent)
 {
-    if (newParent != NULL && dynamic_cast<NodeElement*>(newParent)==NULL)
+    if (newParent != nullptr && dynamic_cast<NodeElement*>(newParent)==nullptr)
         return false;
     else
         return Element<core::objectmodel::BaseNode>::setParent(newParent);
@@ -57,11 +53,11 @@ bool NodeElement::setParent(BaseElement* newParent)
 bool NodeElement::initNode()
 {
     core::objectmodel::BaseNode::SPtr obj = Factory::CreateObject(this->getType(), this);
-    if (obj != NULL)
+    if (obj != nullptr)
     {
         setObject(obj);
         core::objectmodel::BaseNode* baseNode;
-        if (getTypedObject()!=NULL && getParentElement()!=NULL && (baseNode = getParentElement()->getObject()->toBaseNode()))
+        if (getTypedObject() != nullptr && getParentElement() != nullptr && (baseNode = getParentElement()->getObject()->toBaseNode()))
         {
             baseNode->addChild(getTypedObject());
         }
@@ -78,10 +74,8 @@ bool NodeElement::init()
     bool res = Element<core::objectmodel::BaseNode>::init();
 
     /// send the errors created by the object in this node in the node's log
-    for (unsigned int i=0; i<errors.size(); ++i)
-    {
-        msg_error(getObject()) << errors[i];
-    }
+    for (const auto & error : errors)
+        msg_error(getObject()) << error;
 
     return res;
 }

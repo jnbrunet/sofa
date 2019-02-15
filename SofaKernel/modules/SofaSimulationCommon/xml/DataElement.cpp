@@ -37,23 +37,18 @@ namespace xml
 using namespace sofa::defaulttype;
 using helper::Creator;
 
-//template class Factory< std::string, objectmodel::BaseObject, Node<objectmodel::BaseObject*>* >;
-
 DataElement::DataElement(const std::string& name, const std::string& type, BaseElement* parent)
     : Element<core::objectmodel::BaseObject>(name, type, parent)
 {
 }
 
-DataElement::~DataElement()
-{
-}
-
 bool DataElement::initNode()
 {
-    AttributeElement *p = dynamic_cast< AttributeElement *>( getParentElement());
-    std::string info;
-    info = getAttribute( "value", "");
+    auto p = dynamic_cast< AttributeElement *>( getParentElement());
+
+    std::string info = getAttribute( "value", "");
     p->setValue(info);
+
     return true;
 }
 

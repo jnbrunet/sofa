@@ -151,7 +151,7 @@ objectmodel::BaseObject::SPtr ObjectFactory::createObject(objectmodel::BaseConte
 
 
 
-    ClassEntryMap::iterator it = registry.find(classname);
+    auto it = registry.find(classname);
     if (it != registry.end()) // Found the classname
     {
         entry = it->second;
@@ -159,7 +159,7 @@ objectmodel::BaseObject::SPtr ObjectFactory::createObject(objectmodel::BaseConte
         if(templatename.empty() || entry->creatorMap.find(templatename) == entry->creatorMap.end())
             templatename = entry->defaultTemplate;
 
-        CreatorMap::iterator it2 = entry->creatorMap.find(templatename);
+        auto it2 = entry->creatorMap.find(templatename);
         if (it2 != entry->creatorMap.end())
         {
             Creator::SPtr c = it2->second;
@@ -257,8 +257,8 @@ objectmodel::BaseObject::SPtr ObjectFactory::createObject(objectmodel::BaseConte
             object->addAlias(object->findData(kv.first), alias.c_str()) ;
 
             /// The Alias is used in the argument
-            const char* val = arg->getAttribute(alias) ;
-            if( val ){
+            std::string val = arg->getAttribute(alias) ;
+            if( not val.empty() ){
                 newdesc.setAttribute( alias, val );
             }
         }

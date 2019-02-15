@@ -36,27 +36,26 @@ namespace core
 namespace objectmodel
 {
 
-BaseObjectDescription::BaseObjectDescription(const char* name, const char* type)
+BaseObjectDescription::BaseObjectDescription(const std::string & name, const std::string &  type)
 {
-    if (name)
-        attributes["name"] = name;
-    if (type)
-        attributes["type"] = type;
-}
-
-BaseObjectDescription::~BaseObjectDescription()
-{
-    attributes.clear();
+    setAttribute("name", name);
+    setAttribute("type", type);
 }
 
 /// Get the associated object (or NULL if it is not created yet)
 Base* BaseObjectDescription::getObject()
 {
-    return NULL;
+    return nullptr;
+}
+
+/// Get the associated object (or NULL if it is not created yet)
+const Base * BaseObjectDescription::getObject() const
+{
+    return nullptr;
 }
 
 /// Get the object instance name
-std::string BaseObjectDescription::getName()
+std::string BaseObjectDescription::getName() const noexcept
 {
     return std::string(getAttribute("name",""));
 }
@@ -67,19 +66,25 @@ void BaseObjectDescription::setName(const std::string& name)
 }
 
 /// Get the parent node
-BaseObjectDescription* BaseObjectDescription::getParent() const
+BaseObjectDescription* BaseObjectDescription::getParent()
 {
-    return NULL;
+    return nullptr;
+}
+
+/// Get the parent node
+const BaseObjectDescription * BaseObjectDescription::getParent() const
+{
+    return nullptr;
 }
 
 /// Get the file where this description was read from. Useful to resolve relative file paths.
-std::string BaseObjectDescription::getBaseFile()
+std::string BaseObjectDescription::getBaseFile() const noexcept
 {
     return "";
 }
 
 ///// Get all attribute data, read-only
-const BaseObjectDescription::AttributeMap& BaseObjectDescription::getAttributeMap() const
+const BaseObjectDescription::AttributeMap& BaseObjectDescription::getAttributeMap() const noexcept
 {
     return attributes;
 }
@@ -87,13 +92,13 @@ const BaseObjectDescription::AttributeMap& BaseObjectDescription::getAttributeMa
 /// Find an object description given its name (relative to this object)
 BaseObjectDescription* BaseObjectDescription::find(const char* /*nodeName*/, bool /*absolute*/)
 {
-    return NULL;
+    return nullptr;
 }
 
 /// Remove an attribute given its name, returns false if the attribute was not there.
 bool BaseObjectDescription::removeAttribute(const std::string& attr)
 {
-    AttributeMap::iterator it = attributes.find(attr);
+    auto it = attributes.find(attr);
     if (it == attributes.end())
         return false;
 
@@ -101,20 +106,30 @@ bool BaseObjectDescription::removeAttribute(const std::string& attr)
     return true;
 }
 
-/// Get an attribute given its name (return defaultVal if not present)
-const char* BaseObjectDescription::getAttribute(const std::string& attr, const char* defaultVal)
+/// Get an attribute given its name (return defaultValue if not present)
+std::string BaseObjectDescription::getAttribute(const std::string & name, const std::string & defaultValue) const noexcept
 {
-    AttributeMap::iterator it = attributes.find(attr);
-    if (it == attributes.end())
-        return defaultVal;
+    if (hasAttribute(name))
+        return attributes.at(name);
     else
-        return it->second.c_str();
+        return defaultValue;
+}
+
+/// Get an attribute given its name
+/// @throws std::out_of_range exception when the attribute's name doesn't exist.
+std::string BaseObjectDescription::getAttribute(const std::string & name) const
+{
+    if (hasAttribute(name))
+        return attributes.at(name);
+    else
+        throw std::out_of_range("Trying to access an attribute named '" + name +
+                                "', but such attribute does not exist in the current object '" + getName() + "'");
 }
 
 /// Docs is in .h
 float BaseObjectDescription::getAttributeAsFloat(const std::string& attr, const float defaultVal)
 {
-    AttributeMap::iterator it = attributes.find(attr);
+    auto it = attributes.find(attr);
     if (it == attributes.end())
         return defaultVal;
 
@@ -139,15 +154,15 @@ float BaseObjectDescription::getAttributeAsFloat(const std::string& attr, const 
 }
 
 /// Docs is in .h
-int BaseObjectDescription::getAttributeAsInt(const std::string& attr, const int defaultVal)
+long int BaseObjectDescription::getAttributeAsInt(const std::string& attr, const long int defaultVal)
 {
-    AttributeMap::iterator it = attributes.find(attr);
+    auto it = attributes.find(attr);
     if (it == attributes.end())
         return defaultVal;
 
     const char* attrstr=it->second.c_str();
     char* end=nullptr;
-    int retval = strtol(attrstr, &end, 10);
+    auto retval = strtol(attrstr, &end, 10);
 
     /// It is important to check that the attribute was totally parsed to report
     /// message to users because a silent error is the worse thing that can happen in UX.
@@ -160,6 +175,11 @@ int BaseObjectDescription::getAttributeAsInt(const std::string& attr, const int 
     }
 
     return retval ;
+}
+
+bool BaseObjectDescription::hasAttribute(const std::string &name) const noexcept
+{
+    return (attributes.find(name) != attributes.end());
 }
 
 void BaseObjectDescription::setAttribute(const std::string& attr, const char* val)
@@ -175,36 +195,34 @@ void BaseObjectDescription::setAttribute(const std::string& attr, const std::str
     attributes[attr] = val;
 }
 
-std::string BaseObjectDescription::getFullName()
+std::string BaseObjectDescription::getFullName() const
 {
-    BaseObjectDescription* parent = getParent();
-    if (parent==NULL) return "/";
-    std::string pname = parent->getFullName();
-    pname += "/";
-    pname += getName();
-    return pname;
+    const BaseObjectDescription * parent = getParent();
+
+    if (parent == nullptr)
+        return "/";
+
+    return parent->getFullName() + "/" + getName();
 }
 
 /// Find an object given its name
 Base* BaseObjectDescription::findObject(const char* nodeName)
 {
     BaseObjectDescription* node = find(nodeName);
-    if (node!=NULL)
+    if (node != nullptr)
     {
-        //sout << "Found node "<<nodeName<<": "<<node->getName()<<sendl;
         Base* obj = node->getObject();
         BaseContext* ctx = obj->toBaseContext();
-        if (ctx != NULL)
-        {
-            //sout << "Node "<<nodeName<<" is a context, returning MechanicalState."<<sendl;
+
+        if (ctx != nullptr)
             obj = ctx->getMechanicalState();
-        }
+
         return obj;
     }
     else
     {
         msg_error("BaseObjectDescription") << "findObject: Node "<<nodeName<<" NOT FOUND.";
-        return NULL;
+        return nullptr;
     }
 }
 

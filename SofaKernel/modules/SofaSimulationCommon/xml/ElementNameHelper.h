@@ -41,9 +41,6 @@ protected:
     void registerName(const std::string& name);
 
 public:
-    ElementNameHelper();
-    ~ElementNameHelper(); //terminal class.
-
     std::string resolveName(const std::string& type, const std::string& name);
 };
 

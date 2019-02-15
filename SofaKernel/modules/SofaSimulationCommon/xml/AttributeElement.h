@@ -37,15 +37,13 @@ namespace xml
 class SOFA_SIMULATION_COMMON_API AttributeElement : public Element<core::objectmodel::BaseObject>
 {
 public:
-    AttributeElement(const std::string& name, const std::string& type, BaseElement* parent=NULL);
+    AttributeElement(const std::string& name, const std::string& type, BaseElement* parent=nullptr);
 
-    virtual ~AttributeElement();
+    bool init() override;
 
-    virtual bool init();
+    bool initNode() override;
 
-    virtual bool initNode();
-
-    virtual const char* getClass() const;
+    const char* getClass() const override;
 
     void setValue(const std::string _value) {value=_value;}
     std::string getValue() {return value;}

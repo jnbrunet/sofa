@@ -36,25 +36,15 @@ namespace xml
 using namespace sofa::defaulttype;
 using helper::Creator;
 
-//template class Factory< std::string, objectmodel::BaseObject, Node<objectmodel::BaseObject*>* >;
-
 ObjectElement::ObjectElement(const std::string& name, const std::string& type, BaseElement* parent)
     : Element<core::objectmodel::BaseObject>(name, type, parent)
 {
 }
 
-ObjectElement::~ObjectElement()
-{
-}
-
-
 bool ObjectElement::init()
 {
-    int i=0;
-    for (child_iterator<> it = begin(); it != end(); ++it)
-    {
-        i++;
-        it->init();
+    for (BaseElement * child : *this) {
+        child->init();
     }
 
     return initNode();
@@ -66,29 +56,26 @@ bool ObjectElement::initNode()
 {
     core::objectmodel::BaseContext* ctx = getParent()->getObject()->toBaseContext();
 
-    for (AttributeMap::iterator it = attributes.begin(), itend = attributes.end(); it != itend; ++it)
-    {
-        if (replaceAttribute.find(it->first) != replaceAttribute.end())
-        {
-            setAttribute(it->first,replaceAttribute[it->first]);
+    for (const auto & attribute : attributes) {
+        if (replaceAttribute.find(attribute.first) != replaceAttribute.end()) {
+            setAttribute(attribute.first,replaceAttribute[attribute.first]);
         }
     }
 
     core::objectmodel::BaseObject::SPtr obj = core::ObjectFactory::CreateObject(ctx, this);
 
-    if (obj == NULL)
+    if (obj == nullptr)
         obj = Factory::CreateObject(this->getType(), this);
-    if (obj == NULL)
-    {
+
+    if (obj == nullptr) {
         BaseObjectDescription desc("InfoComponent", "InfoComponent") ;
         desc.setAttribute("name", ("Not created ("+getType()+")"));
         obj = core::ObjectFactory::CreateObject(ctx, &desc) ;
         std::stringstream tmp ;
-        for(auto& s : this->getErrors())
+        for(const auto & s : this->getErrors())
             tmp << s << msgendl ;
 
-        if(obj)
-        {
+        if(obj) {
            obj->init() ;
            msg_error(obj.get()) << tmp.str() ;
            return false;
@@ -97,18 +84,22 @@ bool ObjectElement::initNode()
         msg_error(ctx) << tmp.str() ;
         return false;
     }
+
     setObject(obj);
+
     /// display any unused attributes
-    for (AttributeMap::iterator it = attributes.begin(), itend = attributes.end(); it != itend; ++it)
-    {
-        if (!it->second.isAccessed())
+    for (const auto & attribute : attributes) {
+        if (not attribute.second.isAccessed())
         {
-            std::string name = it->first;
+            std::string name = attribute.first;
 
             /// ignore some prefix that are used to quickly disable parameters in XML files
-            if (name.substr(0,1) == "_" || name.substr(0,2) == "NO") continue;
+            if (name.substr(0,1) == "_" || name.substr(0,2) == "NO")
+                continue;
 
-            msg_warning(obj.get()) << SOFA_FILE_INFO_COPIED_FROM(getSrcFile(), getSrcLine()) << "Unused Attribute: \""<<it->first <<"\" with value: \"" <<it->second.c_str() <<"\"" ;        }
+            msg_warning(obj.get())
+            << SOFA_FILE_INFO_COPIED_FROM(getSrcFile(), getSrcLine())
+            << "Unused Attribute: \""<<attribute.first <<"\" with value: \"" <<attribute.second.c_str() <<"\"" ;        }
     }
     return true;
 }

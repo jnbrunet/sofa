@@ -54,7 +54,7 @@ class SOFA_SIMULATION_COMMON_API BaseElement : public core::objectmodel::BaseObj
 private:
     std::string basefile;
     std::string m_srcfile;
-    int m_srcline;
+    long int m_srcline;
 
     BaseElement* parent;
     typedef std::list<BaseElement*> ChildList;
@@ -63,7 +63,7 @@ private:
 protected:
     std::map< std::string, std::string > replaceAttribute;
 public:
-    BaseElement(const std::string& name, const std::string& type, BaseElement* newParent=NULL);
+    BaseElement(const std::string& name, const std::string& type, BaseElement* newParent=nullptr);
 
     virtual ~BaseElement();
 
@@ -71,73 +71,70 @@ public:
     virtual const char* getClass() const = 0;
 
     /// Get the associated object
-    virtual core::objectmodel::Base* getObject() = 0;
+    core::objectmodel::Base* getObject() override = 0;
 
-    /// Get the node instance name
-    std::string getName()
-    { return attributes["name"]; }
-
-    virtual void setName(const std::string& newName)
-    { attributes["name"] = newName; }
+    /// Get the associated object
+    const core::objectmodel::Base * getObject() const override = 0;
 
     /// Get the node instance type (MassObject, IdentityMapping, ...)
-    std::string getType()
-    { return attributes["type"]; }
+    virtual std::string getType() const noexcept
+    { return getAttribute("type", ""); }
 
-    virtual void setType(const std::string& newType)
-    { attributes["type"] = newType; }
+    virtual void setType(const std::string& typeName)
+    { setAttribute("type", typeName); }
 
     /// Get the parent node
-    sofa::core::objectmodel::BaseObjectDescription* getParent() const
+    sofa::core::objectmodel::BaseObjectDescription* getParent() noexcept override
     { return parent; }
 
     /// Get the parent node
-    BaseElement* getParentElement() const
+    const sofa::core::objectmodel::BaseObjectDescription * getParent() const noexcept override
+    { return parent; }
+
+    /// Get the parent node
+    BaseElement* getParentElement() noexcept
+    { return parent; }
+
+    /// Get the parent node
+    const BaseElement * getParentElement() const noexcept
     { return parent; }
 
 
     /// Get the file where this description was read from. Useful to resolve relative file paths.
-    std::string getBaseFile();
-    virtual void setBaseFile(const std::string& newBaseFile);
+    std::string getBaseFile() const noexcept override;
+    virtual void setBaseFile(const std::string & newBaseFile);
 
-    const std::string& getSrcFile() const ;
-    virtual void setSrcFile(const std::string& newSrcFile);
+    const std::string& getSrcFile() const noexcept;
+    virtual void setSrcFile(const std::string & newSrcFile) noexcept;
 
-    int getSrcLine() const ;
-    virtual void setSrcLine(const int l);
+    int getSrcLine() const noexcept;
+    virtual void setSrcLine(long int l) noexcept;
 
     /// Return true if this element was the root of the file
-    bool isFileRoot();
+    bool isFileRoot() const noexcept;
 
     /// Return if the current element ifsa special group node from an included file
-    IncludeNodeType getIncludeNodeType() const { return includeNodeType; }
+    IncludeNodeType getIncludeNodeType() const noexcept
+    { return includeNodeType; }
 
     /// Specify that the current element is a special group node from an included file
-    void setIncludeNodeType(IncludeNodeType t) { includeNodeType=t; }
-
-    ///// Get all attribute data, read-only
-    //const std::map<std::string,std::string*>& getAttributeMap() const;
-
-    ///// Get all attribute data
-    //std::map<std::string,std::string*>& getAttributeMap();
-
-    ///// Get an attribute given its name (return defaultVal if not present)
-    //const char* getAttribute(const std::string& attr, const char* defaultVal=NULL);
-
+    void setIncludeNodeType(IncludeNodeType t) noexcept
+    { includeNodeType = t; }
 
     /// Verify the presence of an attribute
-    virtual bool presenceAttribute(const std::string& s);
+    virtual bool presenceAttribute(const std::string& s) const;
 
     /// Remove an attribute. Fails if this attribute is "name" or "type"
-    virtual bool removeAttribute(const std::string& attr);
+    bool removeAttribute(const std::string& attr) override;
 
     /// List of parameters to be replaced
     virtual void addReplaceAttribute(const std::string &attr, const char* val);
+
     /// Find a node given its name
     virtual BaseElement* findNode(const char* nodeName, bool absolute=false);
 
     /// Find a node given its name
-    virtual BaseObjectDescription* find(const char* nodeName, bool absolute=false)
+    BaseObjectDescription* find(const char* nodeName, bool absolute=false) override
     {
         return findNode(nodeName, absolute);
     }
@@ -146,10 +143,12 @@ public:
     template<class Sequence>
     void pushObjects(Sequence& result)
     {
-        typename Sequence::value_type obj = dynamic_cast<typename Sequence::value_type>(getObject());
-        if (obj!=NULL) result.push_back(obj);
+        auto obj = dynamic_cast<typename Sequence::value_type>(getObject());
 
-        for (child_iterator<> it = begin(); it != end(); ++it)
+        if (obj != nullptr)
+            result.push_back(obj);
+
+        for (auto it = begin(); it != end(); ++it)
             it->pushObjects<Sequence>(result);
     }
 
@@ -159,10 +158,13 @@ public:
     {
         typedef typename Map::value_type V;
         typedef typename V::second_type OPtr;
-        OPtr obj = dynamic_cast<OPtr>(getObject());
-        if (obj!=NULL) result.insert(std::make_pair(getFullName(),obj));
 
-        for (child_iterator<> it = begin(); it != end(); ++it)
+        auto obj = dynamic_cast<OPtr>(getObject());
+
+        if (obj != nullptr)
+            result.insert(std::make_pair(getFullName(),obj));
+
+        for (auto it = begin(); it != end(); ++it)
             it->pushNamedObjects<Map>(result);
     }
 
@@ -188,7 +190,7 @@ public:
         ChildList::iterator it;
         Node* current;
         child_iterator(BaseElement* parent, ChildList::iterator it)
-            : parent(parent), it(it), current(NULL)
+            : parent(parent), it(it), current(nullptr)
         {
             checkIt();
         }
@@ -197,12 +199,15 @@ public:
             while (it != parent->children.end())
             {
                 current=dynamic_cast<Node*>(*it);
-                if (current!=NULL) return;
+                if (current!=nullptr)
+                    return;
                 ++it;
             }
-            current = NULL;
+            current = nullptr;
         }
     public:
+
+        Node * operator*() {return current; }
         operator Node*() { return current; }
         Node* operator->() { return current; }
         void operator ++() { ++it; checkIt(); }

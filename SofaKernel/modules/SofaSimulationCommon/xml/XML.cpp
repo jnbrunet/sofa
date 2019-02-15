@@ -77,25 +77,18 @@ bool deriveFromMultiMapping( const std::string& className)
 
 } // namespace anonymous
 
-void recReplaceAttribute(BaseElement* node, const char* attr, const char* value, const char* nodename=NULL)
+void recReplaceAttribute(BaseElement* node, const char* attr, const char* value, const char* nodename = nullptr)
 {
-    if (nodename)
-    {
-        if (node->getName() == nodename)
-        {
+    if (nodename) {
+        if (node->getName() == nodename) {
             node->addReplaceAttribute(attr,value);
         }
-    }
-    else
-    {
+    } else {
         node->addReplaceAttribute(attr,value);
     }
-    BaseElement::child_iterator<> it = node->begin();
-    BaseElement::child_iterator<> end = node->end();
-    while (it != end)
-    {
-        recReplaceAttribute( it, attr, value, nodename );
-        ++it;
+
+    for (BaseElement * child : *node) {
+        recReplaceAttribute(child, attr, value, nodename);
     }
 }
 
@@ -120,12 +113,12 @@ BaseElement* createNode(TiXmlNode* root, const char *basefilename,ElementNameHel
     // if (root->Type() != TiXmlNode::ELEMENT) return NULL;
     TiXmlElement* element = root->ToElement();
     if (!element)
-        return NULL;
+        return nullptr;
 
     if (!element->Value() || !element->Value()[0])
     {
         msg_error_withfile("XMLParser", basefilename, element->Row()) << "Invalid element : " << *element ;
-        return NULL;
+        return nullptr;
     }
 
     // handle special 'preprocessor' tags
@@ -141,7 +134,7 @@ BaseElement* createNode(TiXmlNode* root, const char *basefilename,ElementNameHel
 
     const char* pname = element->Attribute("name");
 
-    if (pname != NULL)
+    if (pname != nullptr)
     {
         name = pname;
     }
@@ -153,7 +146,7 @@ BaseElement* createNode(TiXmlNode* root, const char *basefilename,ElementNameHel
 
     const char* ptype = element->Attribute("type");
 
-    if (ptype != NULL)
+    if (ptype != nullptr)
     {
         type = ptype;
     }
@@ -174,7 +167,7 @@ BaseElement* createNode(TiXmlNode* root, const char *basefilename,ElementNameHel
         filename += type;
         filename += ".xml";
 
-        if (sofa::helper::system::DataRepository.findFileFromFile(filename, basefilename, NULL))
+        if (sofa::helper::system::DataRepository.findFileFromFile(filename, basefilename, nullptr))
         {
             // we found a replacement xml
             element->SetAttribute("href",filename.c_str());
@@ -190,10 +183,10 @@ BaseElement* createNode(TiXmlNode* root, const char *basefilename,ElementNameHel
     name = elementNameHelper.resolveName(type,name);
 
     BaseElement* node = BaseElement::Create(classType,name,type);
-    if (node==NULL)
+    if (node==nullptr)
     {
         msg_info_withfile("XMLParser", basefilename, element->Row()) << "Node "<<element->Value()<<" name "<<name<<" type "<<type<<" creation failed.\n";
-        return NULL;
+        return nullptr;
     }
 
     if (isRoot)
@@ -205,16 +198,16 @@ BaseElement* createNode(TiXmlNode* root, const char *basefilename,ElementNameHel
      // List attributes
     for (TiXmlAttribute* attr=element->FirstAttribute(); attr ; attr = attr->Next())
     {
-        if (attr->Value()==NULL) continue;
+        if (attr->Value()==nullptr) continue;
         if (!(strcmp(attr->Name(), "name"))) continue;
         if (!(strcmp(attr->Name(), "type"))) continue;
-        node->setAttribute(attr->Name(), attr->Value());
+        node->setAttribute(std::string(attr->Name()), std::string(attr->Value()));
     }
 
-    for (TiXmlNode* child = root->FirstChild() ; child != NULL; child = child->NextSibling())
+    for (TiXmlNode* child = root->FirstChild() ; child != nullptr; child = child->NextSibling())
     {
         BaseElement* childnode = createNode(child, basefilename, elementNameHelper);
-        if (childnode != NULL)
+        if (childnode != nullptr)
         {
             //  if the current node is an included node, with the special name Group, we only add the objects.
             switch(childnode->getIncludeNodeType())
@@ -248,35 +241,15 @@ BaseElement* createNode(TiXmlNode* root, const char *basefilename,ElementNameHel
     return node;
 }
 
-
-/*
- //TODO properly remove this.
-static void dumpNode(BaseElement* node, std::string prefix0="==", std::string prefix="  ")
-{
-    std::cout << prefix0;
-    std::cout << node->getClass()<<" name "<<node->getName()<<" type "<<node->getType()<<std::endl;
-    BaseElement::child_iterator<> it = node->begin();
-    BaseElement::child_iterator<> end = node->end();
-    while (it != end)
-    {
-        BaseElement::child_iterator<> next = it;
-        ++next;
-        if (next==end) dumpNode(it, prefix+"\\-", prefix+"  ");
-        else           dumpNode(it, prefix+"+-", prefix+"| ");
-        it = next;
-    }
-}
-*/
-
 BaseElement* processXMLLoading(const char *filename, const TiXmlDocument &doc, bool fromMem)
 {
     ElementNameHelper resolveElementName;
     const TiXmlElement* hRoot = doc.RootElement();
 
-    if (hRoot == NULL)
+    if (hRoot == nullptr)
     {
         msg_info("XMLParser") << " Empty document: " << filename ;
-        return NULL;
+        return nullptr;
     }
 
     std::string basefilename;
@@ -286,10 +259,10 @@ BaseElement* processXMLLoading(const char *filename, const TiXmlDocument &doc, b
         basefilename = sofa::helper::system::SetDirectory::GetRelativeFromDir(filename,sofa::helper::system::SetDirectory::GetCurrentDir().c_str());
     BaseElement* graph = createNode((TiXmlElement*)hRoot, basefilename.c_str(),resolveElementName, true);
 
-    if (graph == NULL)
+    if (graph == nullptr)
     {
         msg_error("XMLParser") << "XML Graph creation failed." ;
-        return NULL;
+        return nullptr;
     }
 
     return graph;
@@ -305,7 +278,7 @@ BaseElement* loadFromMemory(const char *filename, const char *data, unsigned int
     if (doc.Error())
     {
         msg_error("XMLParser") << "Failed to open " << filename << "\n" << doc.ErrorDesc() << " at line " << doc.ErrorRow() << " row " << doc.ErrorCol() ;
-        return NULL;
+        return nullptr;
     }
     return processXMLLoading(filename, doc, true);
 }
@@ -320,23 +293,18 @@ BaseElement* loadFromFile(const char *filename)
     // this initialize the library and check potential ABI mismatches
     // between the version it was compiled for and the actual shared
     // library used.
-    TiXmlDocument* doc = new TiXmlDocument; // the resulting document tree
-
-    // xmlSubstituteEntitiesDefault(1);
+    auto doc = new TiXmlDocument; // the resulting document tree
 
     if (!(doc->LoadFile(filename)))
     {
         msg_error("XMLParser") << "Failed to open " << filename << "\n" << doc->ErrorDesc() << " at line " << doc->ErrorRow() << " row " << doc->ErrorCol() ;
         delete doc;
-        return NULL;
+        return nullptr;
     }
 
     BaseElement* r = processXMLLoading(filename, *doc);
-    //dmsg_error("XML") << "clear doc";
     doc->Clear();
-    //dmsg_error("XML") << "delete doc";
     delete doc;
-    //dmsg_error("XML") << "<loadFromFile";
     return r;
 }
 
@@ -344,7 +312,9 @@ BaseElement* loadFromFile(const char *filename)
 BaseElement* includeNode(TiXmlNode* root,const char *basefilename, ElementNameHelper& resolveElementName)
 {
     TiXmlElement* element = root->ToElement();
-    if (!element) return NULL;
+
+    if (!element)
+        return nullptr;
 
     std::string filename;
     const char *pfilename = element->Attribute("href");
@@ -355,22 +325,22 @@ BaseElement* includeNode(TiXmlNode* root,const char *basefilename, ElementNameHe
     if (filename.empty())
     {
         msg_error("XMLParser") << "Xml include tag requires non empty filename or href attribute." ;
-        return NULL;
+        return nullptr;
     }
     sofa::helper::system::DataRepository.findFileFromFile(filename, basefilename);
     TiXmlDocument doc; // the resulting document tree
     if (!doc.LoadFile(filename.c_str()))
     {
         msg_error("XMLParser") << "Failed to parse " << filename << "\n";
-        return NULL;
+        return nullptr;
     }
     TiXmlElement* newroot = doc.RootElement();
 
-    if (newroot == NULL)
+    if (newroot == nullptr)
     {
         msg_error("XMLParser") << "ERROR: empty document in " << filename << "\n";
         //xmlFreeDoc(doc);
-        return NULL;
+        return nullptr;
     }
     BaseElement* result = createNode(newroot, filename.c_str(),resolveElementName, true);
     if (result)
@@ -379,10 +349,14 @@ BaseElement* includeNode(TiXmlNode* root,const char *basefilename, ElementNameHe
         if (result->getName() == "_Group_") result->setIncludeNodeType(INCLUDE_NODE_GROUP);
         if (result->getName() == "_Merge_") result->setIncludeNodeType(INCLUDE_NODE_MERGE);
         // Copy attributes
-        for (TiXmlAttribute* attr=element->FirstAttribute(); attr != NULL ; attr = attr->Next())
+        for (TiXmlAttribute* attr=element->FirstAttribute(); attr != nullptr ; attr = attr->Next())
         {
-            if (attr->Value()==NULL) continue;
-            if (!(strcmp(attr->Name(), "href"))) continue;
+            if (attr->Value()==nullptr)
+                continue;
+
+            if (!(strcmp(attr->Name(), "href")))
+                continue;
+
             if (!(strcmp(attr->Name(), "name")))
             {
                 result->setName(attr->Value());
@@ -431,7 +405,7 @@ void recursiveMergeNode(BaseElement* destNode, BaseElement* srcNode)
     for(; itS!=srcNode->end(); ++itS)
     {
         BaseElement* srcElem = itS;
-        BaseElement* destElem = NULL;
+        BaseElement* destElem = nullptr;
         if (!srcElem->getName().empty())
         {
             BaseElement::child_iterator<> itD(destNode->begin());

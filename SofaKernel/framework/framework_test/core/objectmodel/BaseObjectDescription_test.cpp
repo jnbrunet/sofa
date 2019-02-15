@@ -52,8 +52,8 @@ struct BaseObjectDescription_test: public BaseTest
         BaseObjectDescription objectDescription("theName", "theType");
 
         EXPECT_EQ( objectDescription.getName(), "theName");
-        EXPECT_STREQ( objectDescription.getAttribute("name"), "theName");
-        EXPECT_STREQ( objectDescription.getAttribute("type"), "theType");
+        EXPECT_EQ( objectDescription.getAttribute("name"), std::string("theName"));
+        EXPECT_EQ( objectDescription.getAttribute("type"), std::string("theType"));
 
         EXPECT_EQ( objectDescription.getBaseFile(), "") ;
 

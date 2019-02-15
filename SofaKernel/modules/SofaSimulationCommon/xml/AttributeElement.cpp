@@ -39,10 +39,6 @@ AttributeElement::AttributeElement(const std::string& name, const std::string& t
 {
 }
 
-AttributeElement::~AttributeElement()
-{
-}
-
 bool AttributeElement::init()
 {
     int i=0;

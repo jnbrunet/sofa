@@ -29,17 +29,6 @@ namespace simulation
 namespace xml
 {
 
-
-ElementNameHelper::ElementNameHelper()
-{
-
-}
-
-ElementNameHelper::~ElementNameHelper()
-{
-
-}
-
 std::string ElementNameHelper::resolveName(const std::string& type, const std::string& name)
 {
     std::string resolvedName;

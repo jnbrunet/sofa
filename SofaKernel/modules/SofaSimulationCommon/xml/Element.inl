@@ -36,12 +36,7 @@ namespace xml
 
 template<class Object>
 Element<Object>::Element(const std::string& name, const std::string& type, BaseElement* newParent)
-    : BaseElement(name, type, newParent), object(NULL)
-{
-}
-
-template<class Object>
-Element<Object>::~Element()
+    : BaseElement(name, type, newParent), object(nullptr)
 {
 }
 
@@ -60,6 +55,13 @@ void Element<Object>::setObject(typename Object::SPtr newObject)
 /// Get the associated object
 template<class Object>
 core::objectmodel::Base* Element<Object>::getObject()
+{
+    return object.get();
+}
+
+/// Get the associated object
+template<class Object>
+const core::objectmodel::Base * Element<Object>::getObject() const
 {
     return object.get();
 }
