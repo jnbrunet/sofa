@@ -57,7 +57,17 @@ namespace hRecorder
 {
 
 enum class RecordMode { wallclocktime, simulationtime, timeinterval };
-
+enum FBORenderTarget
+{
+    NORMAL_FBO,
+    NORMAL_TEXTURE,
+    NORMAL_COLOR_RBO,
+    NORMAL_DEPTH_RBO,
+    MULTISAMPLING_FBO,
+    MULTISAMPLING_TEXTURE,
+    MULTISAMPLING_COLOR_RBO,
+    MULTISAMPLING_DEPTH_RBO,
+};
 class VideoRecorderFFmpeg;
 
 class HeadlessRecorder : public sofa::gui::BaseGUI
@@ -114,8 +124,7 @@ private:
     std::unique_ptr<VideoRecorderFFmpeg> videorecorder;
     int m_nFrames;
 
-    GLuint fbo;
-    GLuint rbo_color, rbo_depth;
+    GLuint RenderRelatedIds[8];
     double lastProjectionMatrix[16];
     double lastModelviewMatrix[16];
     bool initTexturesDone;
@@ -128,6 +137,7 @@ private:
     static std::string recordTypeRaw;
     static RecordMode recordType;
     static float skipTime;
+    static unsigned int nbMSAASamples;
 };
 
 } // namespace hRecorder

@@ -130,7 +130,7 @@ void BaseCamera::init()
         else
         {
             msg_warning() << "Too many missing parameters ; taking default ..." ;
-            b_setDefaultParameters = true;
+//            b_setDefaultParameters = true;
         }
     }
     else

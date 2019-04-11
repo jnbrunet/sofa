@@ -40,6 +40,7 @@ std::string HeadlessRecorder::fileName = "tmp";
 bool HeadlessRecorder::saveAsVideo = false;
 bool HeadlessRecorder::saveAsScreenShot = false;
 bool HeadlessRecorder::recordUntilStopAnimate = false;
+unsigned int HeadlessRecorder::nbMSAASamples = 1;
 
 std::string HeadlessRecorder::recordTypeRaw = "wallclocktime";
 RecordMode HeadlessRecorder::recordType = RecordMode::wallclocktime;
@@ -76,9 +77,16 @@ HeadlessRecorder::HeadlessRecorder()
 
 HeadlessRecorder::~HeadlessRecorder()
 {
-    glDeleteFramebuffers(1, &fbo);
-    glDeleteRenderbuffers(1, &rbo_color);
-    glDeleteRenderbuffers(1, &rbo_depth);
+    glDeleteFramebuffers(1, &RenderRelatedIds[MULTISAMPLING_FBO]);
+    glDeleteFramebuffers(1, &RenderRelatedIds[MULTISAMPLING_COLOR_RBO]);
+    glDeleteFramebuffers(1, &RenderRelatedIds[MULTISAMPLING_DEPTH_RBO]);
+    glDeleteFramebuffers(1, &RenderRelatedIds[MULTISAMPLING_TEXTURE]);
+    glDeleteFramebuffers(1, &RenderRelatedIds[NORMAL_FBO]);
+    glDeleteFramebuffers(1, &RenderRelatedIds[NORMAL_COLOR_RBO]);
+    glDeleteFramebuffers(1, &RenderRelatedIds[NORMAL_DEPTH_RBO]);
+    glDeleteFramebuffers(1, &RenderRelatedIds[NORMAL_TEXTURE]);
+
+
 }
 
 void HeadlessRecorder::parseRecordingModeOption()
@@ -208,6 +216,10 @@ int HeadlessRecorder::closeGUI()
 // -----------------------------------------------------------------
 void HeadlessRecorder::initializeGL(void)
 {
+    po::variables_map vm = sofa::gui::BaseGUI::mArgumentParser->getVariableMap();
+    if(vm.find("msaa") != vm.end())
+        nbMSAASamples = vm["msaa"].as<unsigned int>();
+    std::cout << "MSAA = " << std::to_string(nbMSAASamples) << std::endl;
     static GLfloat    specular[4];
     static GLfloat    ambientLight[4];
     static GLfloat    diffuseLight[4];
@@ -254,21 +266,39 @@ void HeadlessRecorder::initializeGL(void)
         // Define background color
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
+        // Ref: http://wangchuan.github.io/coding/2016/05/26/multisampling-fbo.html
+        // Multisampling texture
+        glGenTextures(1, &RenderRelatedIds[MULTISAMPLING_TEXTURE]);
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, RenderRelatedIds[MULTISAMPLING_TEXTURE]);
+        {
+            glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_GENERATE_MIPMAP, GL_TRUE);
+        }
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, nbMSAASamples, GL_RGBA, width, height, GL_TRUE);
+
+        // Multisampling color
+        glGenRenderbuffers(1, &RenderRelatedIds[MULTISAMPLING_COLOR_RBO]);
+        glBindRenderbuffer(GL_RENDERBUFFER, RenderRelatedIds[MULTISAMPLING_COLOR_RBO]);
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, nbMSAASamples, GL_RGBA8, width, height);
+
+        // Multisampling depth
+        glGenRenderbuffers(1, &RenderRelatedIds[MULTISAMPLING_DEPTH_RBO]);
+        glBindRenderbuffer(GL_RENDERBUFFER, RenderRelatedIds[MULTISAMPLING_DEPTH_RBO]);
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, nbMSAASamples, GL_DEPTH_COMPONENT, width, height);
+
+
         // frame buffer
-        glGenFramebuffers(1, &fbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glGenFramebuffers(1, &RenderRelatedIds[MULTISAMPLING_FBO]);
+        glBindFramebuffer(GL_FRAMEBUFFER, RenderRelatedIds[MULTISAMPLING_FBO]);
 
-        // color render buffer
-        glGenRenderbuffers(1, &rbo_color);
-        glBindRenderbuffer(GL_RENDERBUFFER, rbo_color);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB, width, height);
-        glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo_color);
+        // Attach the multisampling texture, color render buffer, depth render buffer to FBO
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, RenderRelatedIds[MULTISAMPLING_TEXTURE], 0);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, RenderRelatedIds[MULTISAMPLING_COLOR_RBO]);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, RenderRelatedIds[MULTISAMPLING_DEPTH_RBO]);
 
-        /* Depth renderbuffer. */
-        glGenRenderbuffers(1, &rbo_depth);
-        glBindRenderbuffer(GL_RENDERBUFFER, rbo_depth);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
-        glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo_depth);
         glReadBuffer(GL_COLOR_ATTACHMENT0);
 
         glEnable(GL_DEPTH_TEST);
@@ -577,6 +607,12 @@ void HeadlessRecorder::setViewerResolution(int /*width*/, int /*height*/)
 void HeadlessRecorder::record()
 {
 
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, RenderRelatedIds[MULTISAMPLING_FBO]);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, RenderRelatedIds[NORMAL_FBO]);
+    glDrawBuffer(GL_BACK);
+    glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    glBindFramebuffer(GL_FRAMEBUFFER, RenderRelatedIds[NORMAL_FBO]);
+
     if (saveAsScreenShot)
     {
         std::string pngFilename = fileName + std::to_string(m_nFrames) + ".png" ;
@@ -597,6 +633,7 @@ void HeadlessRecorder::record()
         else
             videorecorder->stop();
     }
+    glBindFramebuffer(GL_FRAMEBUFFER, RenderRelatedIds[MULTISAMPLING_FBO]);
 }
 
 // -----------------------------------------------------------------

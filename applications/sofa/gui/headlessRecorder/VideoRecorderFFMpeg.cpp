@@ -52,7 +52,7 @@ void VideoRecorderFFmpeg::start(void)
     msg_info("VideoRecorder") << "Start recording ... " << filename;
     av_register_all();
 
-    avformat_alloc_output_context2(&oc, NULL, "mp4", filename.c_str());
+    avformat_alloc_output_context2(&oc, av_guess_format("mp4", NULL, "video/mp4"), NULL, filename.c_str());
     if (!oc) {
         msg_error("VideoRecorder") << "Could not allocate format context.";
         exit(1);
@@ -77,8 +77,8 @@ void VideoRecorderFFmpeg::start(void)
     }
     st->id = oc->nb_streams-1;
 
-    AVCodec *pCodec = avcodec_find_decoder(st->codecpar->codec_id);
-    enc = avcodec_alloc_context3(pCodec);
+//    AVCodec *pCodec = avcodec_find_decoder(oc->oformat->video_codec);
+    enc = avcodec_alloc_context3(codec);
 
     if (!enc) {
         msg_error("VideoRecorder") << "Could not allocate video codec context";
@@ -98,6 +98,11 @@ void VideoRecorderFFmpeg::start(void)
 
     if (codec_id == AV_CODEC_ID_H264)
         av_opt_set(enc->priv_data, "preset", "slow", 0);
+
+    if (avcodec_copy_context(st->codec, enc) < 0) {
+        msg_error("VideoRecorder") << "Failed to copy codec context" ;
+        exit(1);
+    }
 
     /* open the codec */
     ret = avcodec_open2(enc, codec, NULL);

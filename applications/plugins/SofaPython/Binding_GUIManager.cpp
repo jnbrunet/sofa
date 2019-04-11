@@ -176,6 +176,33 @@ static PyObject * GUIManager_setDimension(PyObject * /*self*/, PyObject * args) 
     Py_RETURN_NONE;
 }
 
+static constexpr const char* setBackgroundImage_DOC =
+R"DOC(
+Set the GUI's background image.
+
+:param filepath: The file path of the image.
+:type filepath: str
+)DOC";
+static PyObject * GUIManager_setBackgroundImage(PyObject * /*self*/, PyObject * args) {
+    const char * filepath_ptr;
+    if (!PyArg_ParseTuple(args, "s", &filepath_ptr)) {
+        std::string msg = "GUIManager.setBackgroundImage requires a image file path.";
+        SP_MESSAGE_ERROR(msg.c_str());
+        Py_RETURN_NONE;
+    }
+
+    sofa::gui::BaseGUI* gui = sofa::gui::GUIManager::getGUI();
+    if (!gui) {
+        std::string msg = "GUIManager.setBackgroundImage there is no current GUI set.";
+        SP_MESSAGE_ERROR(msg.c_str());
+        Py_RETURN_NONE;
+    }
+
+    gui->setBackgroundImage(filepath_ptr);
+
+    Py_RETURN_NONE;
+}
+
 static constexpr const char* setScene_DOC =
 R"DOC(
 Set the GUI's main scene
@@ -243,6 +270,7 @@ SP_MODULE_METHOD_DOC(GUIManager, getSofaPrefix, getSofaPrefix_DOC)
 SP_MODULE_METHOD_DOC(GUIManager, init, init_DOC)
 SP_MODULE_METHOD_DOC(GUIManager, createGUI, createGUI_DOC)
 SP_MODULE_METHOD_DOC(GUIManager, setDimension, setDimension_DOC)
+SP_MODULE_METHOD_DOC(GUIManager, setBackgroundImage, setBackgroundImage_DOC)
 SP_MODULE_METHOD_DOC(GUIManager, setScene, setScene_DOC)
 SP_MODULE_METHOD_DOC(GUIManager, MainLoop, MainLoop_DOC)
 SP_MODULE_METHOD(GUIManager, closeGUI)
