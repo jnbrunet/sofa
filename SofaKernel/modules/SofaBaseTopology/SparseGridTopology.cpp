@@ -1145,66 +1145,66 @@ void SparseGridTopology::buildFromFiner()
     seqHexahedra.endEdit();
 
 
-    // for interpolation and restriction
-    _hierarchicalPointMap.resize(this->seqPoints.getValue().size());
-    _finerSparseGrid->_inverseHierarchicalPointMap.resize(_finerSparseGrid->seqPoints.getValue().size());
-    _finerSparseGrid->_inversePointMap.resize(_finerSparseGrid->seqPoints.getValue().size()); _finerSparseGrid->_inversePointMap.fill(-1);
-    _pointMap.resize(this->seqPoints.getValue().size()); _pointMap.fill(-1);
-
-    for( unsigned w=0; w<seqHexahedra.getValue().size(); ++w)
-    {
-        const fixed_array<int, 8>& child = _hierarchicalCubeMap[w];
-
-        helper::vector<int> fineCorners(27);
-        fineCorners.fill(-1);
-        for(int fineCube=0; fineCube<8; ++fineCube)
-        {
-            if( child[fineCube] == -1 ) continue;
-
-            const Hexa& cube = _finerSparseGrid->getHexahedron(child[fineCube]);
-
-            for(int vertex=0; vertex<8; ++vertex)
-            {
-                // 					if( fineCorners[cornerIndicesFromFineToCoarse[fineCube][vertex]]!=-1 && fineCorners[cornerIndicesFromFineToCoarse[fineCube][vertex]]!=cube[vertex] )
-                // 						msg_error()<<"couille fineCorners";
-                fineCorners[cornerIndicesFromFineToCoarse[fineCube][vertex]]=cube[vertex];
-            }
-
-        }
-
-
-        for(int coarseCornerLocalIndice=0; coarseCornerLocalIndice<8; ++coarseCornerLocalIndice)
-        {
-            for( int fineVertexLocalIndice=0; fineVertexLocalIndice<27; ++fineVertexLocalIndice)
-            {
-                if( fineCorners[fineVertexLocalIndice] == -1 ) continue; // this fine vertex is not in any fine cube
-
-                int coarseCornerGlobalIndice = seqHexahedra.getValue()[w][coarseCornerLocalIndice];
-                int fineVertexGlobalIndice = fineCorners[fineVertexLocalIndice];
-
-                if( WEIGHT27[coarseCornerLocalIndice][fineVertexLocalIndice] )
-                {
-                    _hierarchicalPointMap[coarseCornerGlobalIndice][fineVertexGlobalIndice] = WEIGHT27[coarseCornerLocalIndice][fineVertexLocalIndice];
-                    // 						_hierarchicalPointMap[coarseCornerGlobalIndice].push_back( std::pair<int,float>(fineVertexGlobalIndice, WEIGHT27[coarseCornerLocalIndice][fineVertexLocalIndice]) );
-
-                    _finerSparseGrid->_inverseHierarchicalPointMap[fineVertexGlobalIndice][coarseCornerGlobalIndice] = WEIGHT27[coarseCornerLocalIndice][fineVertexLocalIndice];
-
-                    if( WEIGHT27[coarseCornerLocalIndice][fineVertexLocalIndice] == 1.0 )
-                    {
-                        _finerSparseGrid->_inversePointMap[fineVertexGlobalIndice] = coarseCornerGlobalIndice;
-                        // 							msg_error()<<getPX(coarseCornerGlobalIndice)<<" "<<getPY(coarseCornerGlobalIndice)<<" "<<getPZ(coarseCornerGlobalIndice)<<" ----- ";
-                        // 							msg_error()<<_finerSparseGrid->getPX(fineVertexGlobalIndice)<<" "<<_finerSparseGrid->getPY(fineVertexGlobalIndice)<<" "<<_finerSparseGrid->getPZ(fineVertexGlobalIndice);
-                    }
-                }
-            }
-        }
-    }
-
-    for( unsigned i=0; i<_finerSparseGrid->_inversePointMap.size(); ++i)
-    {
-        if(_finerSparseGrid->_inversePointMap[i] != -1)
-            _pointMap[ _finerSparseGrid->_inversePointMap[i] ] = i;
-    }
+//    // for interpolation and restriction
+//    _hierarchicalPointMap.resize(this->seqPoints.getValue().size());
+//    _finerSparseGrid->_inverseHierarchicalPointMap.resize(_finerSparseGrid->seqPoints.getValue().size());
+//    _finerSparseGrid->_inversePointMap.resize(_finerSparseGrid->seqPoints.getValue().size()); _finerSparseGrid->_inversePointMap.fill(-1);
+//    _pointMap.resize(this->seqPoints.getValue().size()); _pointMap.fill(-1);
+//
+//    for( unsigned w=0; w<seqHexahedra.getValue().size(); ++w)
+//    {
+//        const fixed_array<int, 8>& child = _hierarchicalCubeMap[w];
+//
+//        helper::vector<int> fineCorners(27);
+//        fineCorners.fill(-1);
+//        for(int fineCube=0; fineCube<8; ++fineCube)
+//        {
+//            if( child[fineCube] == -1 ) continue;
+//
+//            const Hexa& cube = _finerSparseGrid->getHexahedron(child[fineCube]);
+//
+//            for(int vertex=0; vertex<8; ++vertex)
+//            {
+//                // 					if( fineCorners[cornerIndicesFromFineToCoarse[fineCube][vertex]]!=-1 && fineCorners[cornerIndicesFromFineToCoarse[fineCube][vertex]]!=cube[vertex] )
+//                // 						msg_error()<<"couille fineCorners";
+//                fineCorners[cornerIndicesFromFineToCoarse[fineCube][vertex]]=cube[vertex];
+//            }
+//
+//        }
+//
+//
+//        for(int coarseCornerLocalIndice=0; coarseCornerLocalIndice<8; ++coarseCornerLocalIndice)
+//        {
+//            for( int fineVertexLocalIndice=0; fineVertexLocalIndice<27; ++fineVertexLocalIndice)
+//            {
+//                if( fineCorners[fineVertexLocalIndice] == -1 ) continue; // this fine vertex is not in any fine cube
+//
+//                int coarseCornerGlobalIndice = seqHexahedra.getValue()[w][coarseCornerLocalIndice];
+//                int fineVertexGlobalIndice = fineCorners[fineVertexLocalIndice];
+//
+//                if( WEIGHT27[coarseCornerLocalIndice][fineVertexLocalIndice] )
+//                {
+//                    _hierarchicalPointMap[coarseCornerGlobalIndice][fineVertexGlobalIndice] = WEIGHT27[coarseCornerLocalIndice][fineVertexLocalIndice];
+//                    // 						_hierarchicalPointMap[coarseCornerGlobalIndice].push_back( std::pair<int,float>(fineVertexGlobalIndice, WEIGHT27[coarseCornerLocalIndice][fineVertexLocalIndice]) );
+//
+//                    _finerSparseGrid->_inverseHierarchicalPointMap[fineVertexGlobalIndice][coarseCornerGlobalIndice] = WEIGHT27[coarseCornerLocalIndice][fineVertexLocalIndice];
+//
+//                    if( WEIGHT27[coarseCornerLocalIndice][fineVertexLocalIndice] == 1.0 )
+//                    {
+//                        _finerSparseGrid->_inversePointMap[fineVertexGlobalIndice] = coarseCornerGlobalIndice;
+//                        // 							msg_error()<<getPX(coarseCornerGlobalIndice)<<" "<<getPY(coarseCornerGlobalIndice)<<" "<<getPZ(coarseCornerGlobalIndice)<<" ----- ";
+//                        // 							msg_error()<<_finerSparseGrid->getPX(fineVertexGlobalIndice)<<" "<<_finerSparseGrid->getPY(fineVertexGlobalIndice)<<" "<<_finerSparseGrid->getPZ(fineVertexGlobalIndice);
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
+//    for( unsigned i=0; i<_finerSparseGrid->_inversePointMap.size(); ++i)
+//    {
+//        if(_finerSparseGrid->_inversePointMap[i] != -1)
+//            _pointMap[ _finerSparseGrid->_inversePointMap[i] ] = i;
+//    }
 
     _finerSparseGrid->_coarserSparseGrid = this;
     _finerSparseGrid->_inverseHierarchicalCubeMap.resize( _finerSparseGrid->seqHexahedra.getValue().size(), -1);

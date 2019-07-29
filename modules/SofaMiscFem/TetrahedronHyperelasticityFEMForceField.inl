@@ -347,6 +347,7 @@ void TetrahedronHyperelasticityFEMForceField<DataTypes>::addForce(const core::Me
 template <class DataTypes>
 void TetrahedronHyperelasticityFEMForceField<DataTypes>::updateTangentMatrix()
 {
+    sofa::helper::AdvancedTimer::stepBegin("TetrahedronHyperelasticityFEMForceField::updateTangentMatrix");
     unsigned int i=0,j=0,k=0,l=0;
     unsigned int nbEdges=m_topology->getNbEdges();
     const vector< Edge> &edgeArray=m_topology->getEdges() ;
@@ -426,6 +427,7 @@ void TetrahedronHyperelasticityFEMForceField<DataTypes>::updateTangentMatrix()
         }// end of for j
     }//end of for i
     m_updateMatrix=false;
+    sofa::helper::AdvancedTimer::stepEnd("TetrahedronHyperelasticityFEMForceField::updateTangentMatrix");
 }
 
 
@@ -455,6 +457,7 @@ void TetrahedronHyperelasticityFEMForceField<DataTypes>::addDForce(const core::M
     unsigned int v0,v1;
     Deriv deltax;	Deriv dv0,dv1;
 
+    sofa::helper::AdvancedTimer::stepBegin("TetrahedronHyperelasticityFEMForceField::addDForce");
     for(l=0; l<nbEdges; l++ )
     {
         einfo=&edgeInf[l];
@@ -471,6 +474,7 @@ void TetrahedronHyperelasticityFEMForceField<DataTypes>::addDForce(const core::M
         df[v0] += dv1 * kFactor;
         df[v1] -= dv0 * kFactor;
     }
+    sofa::helper::AdvancedTimer::stepEnd("TetrahedronHyperelasticityFEMForceField::addDForce");
     m_edgeInfo.endEdit();
     m_tetrahedronInfo.endEdit();
 

@@ -151,6 +151,8 @@ void CGLinearSolver<TMatrix,TVector>::solve(Matrix& M, Vector& x, Vector& b)
 
     msg_info_when(verbose) << "b = " << b ;
 
+    sofa::helper::AdvancedTimer::stepBegin("CGLinearSolver::Solve");
+
 
     /// Compute the initial residual r
     if( f_warmStart.getValue() )
@@ -372,7 +374,9 @@ void CGLinearSolver<TMatrix,TVector>::solve(Matrix& M, Vector& x, Vector& b)
     f_graph.endEdit();
     timeStepCount ++;
 
-    sofa::helper::AdvancedTimer::valSet("CG iterations", nb_iter);
+    sofa::helper::AdvancedTimer::valSet("residual", graph_error.back());
+    sofa::helper::AdvancedTimer::valSet("CG_iterations", nb_iter);
+    sofa::helper::AdvancedTimer::stepEnd("CGLinearSolver::Solve");
 
     // x is the solution of the system
 #ifdef DISPLAY_TIME
