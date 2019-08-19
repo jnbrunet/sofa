@@ -81,18 +81,19 @@ void Hexa2QuadTopologicalMapping::init()
 
     if (!toModel)
     {
-        msg_error() << "Pointer to output topology is invalid.";
-        modelsOk = false;
-    }
-    else
-    {
-        QuadSetTopologyModifier *to_tstm;
-        toModel->getContext()->get(to_tstm);
-        if (!to_tstm)
-        {
-            msg_error() << "No QuadSetTopologyModifier found in the Quad topology Node.";
+        QuadSetTopologyContainer *topo;
+        this->getContext()->get(topo);
+        if (! topo) {
+            msg_error() << "Pointer to output topology is invalid.";
             modelsOk = false;
+        } else {
+            toModel.set(dynamic_cast<BaseMeshTopology*>(topo));
         }
+    }
+
+    if (!dynamic_cast<QuadSetTopologyContainer *>(toModel.get())) {
+        msg_error() << "The output topology '" << toModel.getPath() << "' is not a derived class of QuadSetTopologyContainer.";
+        modelsOk = false;
     }
 
     if (!modelsOk)
@@ -101,8 +102,7 @@ void Hexa2QuadTopologicalMapping::init()
         return;
     }
 
-    QuadSetTopologyContainer *to_tstc;
-    toModel->getContext()->get(to_tstc);
+    auto to_tstc = dynamic_cast<QuadSetTopologyContainer *>(toModel.get());
     // Clear output topology
     to_tstc->clear();
 
