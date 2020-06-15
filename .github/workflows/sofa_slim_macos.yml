@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: CI MacOS
 
 on:
   push:
@@ -18,7 +18,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install requirements
-      run: brew install ccache ninja boost
+      run: brew install ccache ninja boost eigen
 
     - name: Get Time
       id: time
