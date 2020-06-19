@@ -29,7 +29,19 @@ jobs:
         
       - name: Getting last built SOFA tag
         id: sofa_built_tag
-        run: echo "::set-output name=tag::$(curl -s 'https://api.github.com/repos/jnbrunet/sofa/actions/artifacts' | python3 -c "import sys,json,re;print(sorted(filter(lambda a:re.search('${{ matrix.os }}', a['name'], re.I),json.load(sys.stdin)['artifacts']), reverse=False, key=lambda a:a['created_at'])[-1]['name'].split('_')[-1])")"    
+        shell: python
+        #run: echo "::set-output name=tag::$(curl -s 'https://api.github.com/repos/jnbrunet/sofa/actions/artifacts' | python3 -c "import sys,json,re;print(sorted(filter(lambda a:re.search('${{ matrix.os }}', a['name'], re.I),json.load(sys.stdin)['artifacts']), reverse=False, key=lambda a:a['created_at'])[-1]['name'].split('_')[-1])")"
+        run: |
+          import urllib.request, json, sys, re
+          url = 'https://api.github.com/repos/jnbrunet/sofa/actions/artifacts'
+          req = urllib.request.Request(url)
+          r = urllib.request.urlopen(req).read()
+          artifacts = json.loads(r.decode('utf-8'))['artifacts']
+          os_artifacts = filter(lambda a:re.search('${{ matrix.os }}', a['name'], re.I), artifacts)
+          last_artifact = sorted(os_artifacts, reverse=False, key=lambda a:a['created_at'])[-1]
+          last_hash = last_artifact['name'].split('_')[-1]
+          print(f"::set-output name=tag::{last_hash}")
+          
 
       - name: Checkout source code
         uses: actions/checkout@v2
