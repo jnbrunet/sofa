@@ -35,6 +35,7 @@ jobs:
           import urllib.request, json, sys, re
           url = 'https://api.github.com/repos/jnbrunet/sofa/actions/artifacts'
           req = urllib.request.Request(url)
+          req.add_header('authorization', 'Bearer ${{ secrets.GITHUB_TOKEN }}')
           r = urllib.request.urlopen(req).read()
           artifacts = json.loads(r.decode('utf-8'))['artifacts']
           os_artifacts = filter(lambda a:re.search('${{ matrix.os }}', a['name'], re.I), artifacts)
