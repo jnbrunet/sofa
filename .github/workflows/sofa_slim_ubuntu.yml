@@ -100,5 +100,5 @@ jobs:
         if: steps.sofa_master_tag.outputs.tag != steps.sofa_built_tag.outputs.tag
         uses: actions/upload-artifact@v2
         with:
-          name: sofa-slim-${{ matrix.os }}
+          name: sofa-slim-${{ matrix.os }}_${{ steps.sofa_master_tag.outputs.tag }}
           path: install
