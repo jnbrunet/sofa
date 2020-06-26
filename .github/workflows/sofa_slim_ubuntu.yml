@@ -80,6 +80,8 @@ jobs:
           export CCACHE_BASEDIR=$GITHUB_WORKSPACE
           && export CCACHE_DIR=$GITHUB_WORKSPACE/.ccache
           && ccache -z
+          && mkdir build
+          && cd build
           && cmake 
               -GNinja
               -DCMAKE_C_COMPILER_LAUNCHER=ccache
@@ -94,7 +96,7 @@ jobs:
               -DSOFAGUI_BUILD_TESTS=OFF
               -DSOFA_FLOATING_POINT_TYPE=double
               -DSOFA_WITH_DEPRECATED_COMPONENTS=OFF
-              .
+              ..
           && ninja 
           && ninja install
           && ccache -s
@@ -103,4 +105,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: sofa-slim-${{ matrix.os }}_${{ steps.sofa_master_tag.outputs.tag }}
-          path: install
+          path: build/install
