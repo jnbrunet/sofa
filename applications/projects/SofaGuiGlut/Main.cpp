@@ -92,7 +92,6 @@ using  sofa::helper::logging::MainPerComponentLoggingMessageHandler ;
 #endif
 
 using sofa::helper::system::DataRepository;
-using sofa::helper::system::PluginRepository;
 using sofa::helper::system::PluginManager;
 
 #include <sofa/helper/logging/MessageDispatcher.h>
@@ -245,8 +244,8 @@ int main(int argc, char** argv)
     for (unsigned int i=0; i<plugins.size(); i++)
         PluginManager::getInstance().loadPlugin(plugins[i]);
 
-    std::string configPluginPath = PluginRepository.getFirstPath() + "/" + sofa_tostring(CONFIG_PLUGIN_FILENAME) ;
-    std::string defaultConfigPluginPath = PluginRepository.getFirstPath() + "/" + sofa_tostring(DEFAULT_CONFIG_PLUGIN_FILENAME);
+    std::string configPluginPath = PluginManager::getInstance().getPluginRepository().getFirstPath() + "/" + sofa_tostring(CONFIG_PLUGIN_FILENAME) ;
+    std::string defaultConfigPluginPath = PluginManager::getInstance().getPluginRepository().getFirstPath() + "/" + sofa_tostring(DEFAULT_CONFIG_PLUGIN_FILENAME);
 
     if (!noAutoloadPlugins)
     {

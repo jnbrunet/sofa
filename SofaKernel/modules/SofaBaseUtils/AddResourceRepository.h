@@ -27,8 +27,7 @@
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/core/objectmodel/DataFileName.h>
 #include <sofa/helper/system/FileRepository.h>
-using sofa::helper::system::FileRepository;
-using sofa::core::objectmodel::DataFileName;
+#include <sofa/helper/system/PluginManager.h>
 
 namespace sofa
 {
@@ -47,10 +46,10 @@ protected:
     BaseAddResourceRepository();
     ~BaseAddResourceRepository() override;
 
-    FileRepository* m_repository;
+    sofa::helper::system::FileRepository* m_repository;
 
 public:
-    DataFileName d_repositoryPath; ///< Path to add to the pool of resources
+    sofa::core::objectmodel::DataFileName d_repositoryPath; ///< Path to add to the pool of resources
 
     void parse(sofa::core::objectmodel::BaseObjectDescription* arg) override;
     bool updateRepositoryPath();
@@ -59,7 +58,7 @@ public:
 private:
     std::string m_currentAddedPath;
 
-    virtual FileRepository* getFileRepository() = 0;
+    virtual sofa::helper::system::FileRepository* getFileRepository() = 0;
 };
 
 
@@ -70,7 +69,7 @@ public:
     SOFA_CLASS(AddDataRepository, BaseAddResourceRepository);
 
 protected:
-    FileRepository* getFileRepository() override { return &sofa::helper::system::DataRepository; }
+    sofa::helper::system::FileRepository* getFileRepository() override { return &sofa::helper::system::DataRepository; }
 };
 
 
@@ -81,7 +80,10 @@ public:
     SOFA_CLASS(AddPluginRepository, BaseAddResourceRepository);
 
 protected:
-    FileRepository* getFileRepository() override { return &sofa::helper::system::PluginRepository; }
+    sofa::helper::system::FileRepository* getFileRepository() override {
+        using sofa::helper::system::PluginManager;
+        return &PluginManager::getInstance().getPluginRepository();
+    }
 };
 
 

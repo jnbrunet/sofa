@@ -20,7 +20,6 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include <sofa/helper/system/PluginManager.h>
-#include <sofa/helper/system/FileRepository.h>
 #include <sofa/helper/system/SetDirectory.h>
 #include <sofa/helper/system/FileSystem.h>
 using sofa::helper::system::FileSystem;
@@ -75,6 +74,10 @@ PluginManager & PluginManager::getInstance()
 }
 
 PluginManager::PluginManager()
+: m_pluginRepository("SOFA_PLUGIN_PATH", {
+    Utils::getSofaPathTo("lib"),
+    Utils::getSofaPathTo("plugins"),
+})
 {
 }
 
@@ -314,7 +317,7 @@ void PluginManager::init(const std::string& pluginPath)
 
 std::string PluginManager::findPlugin(const std::string& pluginName, const std::string& suffix, bool ignoreCase, bool recursive, int maxRecursiveDepth)
 {
-    std::vector<std::string> searchPaths = PluginRepository.getPaths();
+    std::vector<std::string> searchPaths = getPluginRepository().getPaths();
 
     std::string name(pluginName);
     name  += suffix;

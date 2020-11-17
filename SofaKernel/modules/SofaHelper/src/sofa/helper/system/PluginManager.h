@@ -24,6 +24,7 @@
 
 #include <sofa/helper/config.h>
 #include <sofa/helper/system/DynamicLibrary.h>
+#include <sofa/helper/system/FileRepository.h>
 #include <vector>
 #include <map>
 #include <memory>
@@ -190,6 +191,18 @@ public:
     void readFromIniFile(const std::string& path);
     void writeToIniFile(const std::string& path);
 
+    /**
+     * Get a readonly reference to the plugin file repository. This repository is used to recursively search plugins in a given
+     * set of directories.
+     */
+    const FileRepository & getPluginRepository() const { return m_pluginRepository; }
+
+    /**
+     * Get a reference to the plugin file repository. This repository is used to recursively search plugins in a given
+     * set of directories.
+     */
+    FileRepository & getPluginRepository() { return m_pluginRepository; }
+
     static std::string s_gui_postfix; ///< the postfix to gui plugin, default="gui" (e.g. myplugin_gui.so)
 
 private:
@@ -200,6 +213,7 @@ private:
     std::istream& readFromStream( std::istream& );
 private:
     PluginMap m_pluginMap;
+    FileRepository m_pluginRepository;
 };
 
 

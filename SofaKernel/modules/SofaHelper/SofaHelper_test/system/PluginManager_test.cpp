@@ -58,7 +58,7 @@ struct PluginManager_test: public BaseTest
 
     void SetUp() override
     {
-        pluginDir = sofa::helper::system::PluginRepository.getFirstPath();
+        pluginDir = PluginManager::getInstance().getPluginRepository().getFirstPath();
     }
 
     void TearDown() override

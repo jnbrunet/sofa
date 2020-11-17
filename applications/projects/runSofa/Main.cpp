@@ -98,7 +98,6 @@ using  sofa::helper::logging::MainPerComponentLoggingMessageHandler ;
 using sofa::gui::GuiDataRepository ;
 
 using sofa::helper::system::DataRepository;
-using sofa::helper::system::PluginRepository;
 using sofa::helper::system::PluginManager;
 
 #include <sofa/helper/logging/MessageDispatcher.h>
@@ -410,7 +409,8 @@ int main(int argc, char** argv)
     MessageDispatcher::addHandler(&MainPerComponentLoggingMessageHandler::getInstance()) ;
 
     // Output FileRepositories
-    msg_info("runSofa") << "PluginRepository paths = " << PluginRepository.getPathsJoined();
+    const auto & plugin_repository = PluginManager::getInstance().getPluginRepository();
+    msg_info("runSofa") << "PluginRepository paths = " << plugin_repository.getPathsJoined();
     msg_info("runSofa") << "DataRepository paths = " << DataRepository.getPathsJoined();
     msg_info("runSofa") << "GuiDataRepository paths = " << GuiDataRepository.getPathsJoined();
 
@@ -429,12 +429,12 @@ int main(int argc, char** argv)
 
     if (!noAutoloadPlugins)
     {
-        if (PluginRepository.findFile(configPluginPath, "", nullptr))
+        if (plugin_repository.findFile(configPluginPath, "", nullptr))
         {
             msg_info("runSofa") << "Loading automatically plugin list in " << configPluginPath;
             PluginManager::getInstance().readFromIniFile(configPluginPath);
         }
-        else if (PluginRepository.findFile(defaultConfigPluginPath, "", nullptr))
+        else if (plugin_repository.findFile(defaultConfigPluginPath, "", nullptr))
         {
             msg_info("runSofa") << "Loading automatically plugin list in " << defaultConfigPluginPath;
             PluginManager::getInstance().readFromIniFile(defaultConfigPluginPath);

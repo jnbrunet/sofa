@@ -26,11 +26,7 @@
 #include <sofa/helper/system/PluginManager.h>
 using sofa::helper::system::PluginManager ;
 
-#include <sofa/helper/system/FileRepository.h>
-using sofa::helper::system::PluginRepository ;
-
 #include <sofa/helper/system/FileSystem.h>
-using sofa::helper::system::PluginRepository;
 using sofa::helper::system::FileSystem;
 
 #include <sofa/helper/Utils.h>

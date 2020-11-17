@@ -22,12 +22,6 @@
 #include <sofa/helper/system/PluginManager.h>
 using sofa::helper::system::PluginManager ;
 
-#include <sofa/helper/system/FileRepository.h>
-using sofa::helper::system::PluginRepository ;
-
-#include <sofa/helper/Utils.h>
-using sofa::helper::Utils ;
-
 namespace loadplugins
 {
     bool initPlugins()

@@ -921,7 +921,7 @@ static PyObject * Sofa_addPluginRepository(PyObject *, PyObject *arg)
     const char *path;
     if (!PyArg_ParseTuple(arg, "s", &path))
         return NULL;
-    sofa::helper::system::PluginRepository.addFirstPath(path);
+    sofa::helper::system::PluginManager::getInstance().getPluginRepository().addFirstPath(path);
 
     return Py_None;
 }

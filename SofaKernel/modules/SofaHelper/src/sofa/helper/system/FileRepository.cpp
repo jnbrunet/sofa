@@ -223,7 +223,7 @@ void FileRepository::clear()
     vpath.clear();
 }
 
-std::string FileRepository::getFirstPath()
+std::string FileRepository::getFirstPath() const
 {
     if (vpath.size() > 0)
         return vpath.front();
@@ -254,7 +254,7 @@ bool FileRepository::findFileIn(std::string& filename, const std::string& path)
     return false;
 }
 
-bool FileRepository::findFile(std::string& filename, const std::string& basedir, std::ostream* errlog)
+bool FileRepository::findFile(std::string& filename, const std::string& basedir, std::ostream* errlog) const
 {
     if (filename.empty()) return false; // no filename
     if (!directAccessProtocolPrefix.empty() && filename.substr(0, directAccessProtocolPrefix.size()) == directAccessProtocolPrefix)
@@ -293,18 +293,18 @@ bool FileRepository::findFile(std::string& filename, const std::string& basedir,
     return false;
 }
 
-bool FileRepository::findFileFromFile(std::string& filename, const std::string& basefile, std::ostream* errlog)
+bool FileRepository::findFileFromFile(std::string& filename, const std::string& basefile, std::ostream* errlog) const
 {
     return findFile(filename, SetDirectory::GetParentDir(basefile.c_str()), errlog);
 }
 
-void FileRepository::print()
+void FileRepository::print() const
 {
     for (std::vector<std::string>::const_iterator it = vpath.begin(); it != vpath.end(); ++it)
         std::cout << *it << std::endl;
 }
 
-const std::string FileRepository::getPathsJoined()
+std::string FileRepository::getPathsJoined() const
 {
     std::ostringstream imploded;
     std::string delim = ":";

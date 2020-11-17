@@ -113,7 +113,7 @@ public:
     void clear();
 
     /// Get the first path into the set of paths
-    std::string getFirstPath();
+    std::string getFirstPath() const;
 
     /// Returns a string such as refPath + string = path if path contains refPath.
     /// Otherwise returns path.
@@ -124,7 +124,7 @@ public:
 
     const std::vector< std::string > &getPaths() const {return vpath;}
 
-    const std::string getPathsJoined();
+    std::string getPathsJoined() const;
 
     const std::string& getDirectAccessProtocolPrefix() const { return directAccessProtocolPrefix; }
     void setDirectAccessProtocolPrefix(const std::string& protocolPrefix) { directAccessProtocolPrefix = protocolPrefix; }
@@ -133,11 +133,11 @@ public:
     /// @param basedir override current directory (optional)
     /// @param filename requested file as input, resolved file path as output
     /// @return true if the file was found in one of the directories, false otherwise
-    bool findFile(std::string& filename, const std::string& basedir="", std::ostream* errlog=&std::cerr);
+    bool findFile(std::string& filename, const std::string& basedir="", std::ostream* errlog=&std::cerr) const;
 
     /// Alias for findFile, but returning the resolved file as the result.
     /// Less informative for errors, but sometimes easier to use
-    std::string getFile(std::string filename, const std::string& basedir="", std::ostream* errlog=&std::cerr)
+    std::string getFile(std::string filename, const std::string& basedir="", std::ostream* errlog=&std::cerr) const
     {
         findFile(filename, basedir, errlog);
         return filename;
@@ -147,10 +147,10 @@ public:
     /// @param basefile override current directory by using the parent directory of the given file
     /// @param filename requested file as input, resolved file path as output
     /// @return true if the file was found in one of the directories, false otherwise
-    bool findFileFromFile(std::string& filename, const std::string& basefile, std::ostream* errlog=&std::cerr);
+    bool findFileFromFile(std::string& filename, const std::string& basefile, std::ostream* errlog=&std::cerr) const;
 
     /// Print the list of path to std::cout
-    void print();
+    void print() const;
 
 
     /// OS-dependant character separing entries in list of paths.
@@ -173,7 +173,7 @@ public:
         return _flux;
     }
 
-    void displayPaths() {std::cout<<(*this)<<std::endl;}
+    void displayPaths() const {std::cout<<(*this)<<std::endl;}
 
     const std::string getTempPath() const;
 
@@ -192,6 +192,9 @@ protected:
 };
 
 extern SOFA_HELPER_API FileRepository DataRepository; ///< Default repository
+
+[[deprecated("The global variable PluginRepository is no longer used since PR #XXXX. To update the file repository used by"
+             "the plugin manager, use sofa::helper::system::PluginManager::getInstance().getPluginRepository().")]]
 extern SOFA_HELPER_API FileRepository PluginRepository; ///< Default repository
 
 } // namespace system

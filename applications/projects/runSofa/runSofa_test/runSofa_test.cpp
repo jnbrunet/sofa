@@ -31,7 +31,6 @@ namespace sofa
 {
 
 using sofa::helper::system::DataRepository;
-using sofa::helper::system::PluginRepository;
 using sofa::helper::system::PluginManager;
 
 class runSofa_test : public Sofa_test<>
@@ -47,7 +46,7 @@ protected:
 
     void SetUp()
     {
-        const std::string& pluginDir = PluginRepository.getFirstPath();
+        const std::string& pluginDir = PluginManager::getInstance().getPluginRepository().getFirstPath();
 
         m_testConfigPluginName = "test_plugin_list.conf";
         m_testConfigPluginPath = pluginDir + "/" + m_testConfigPluginName;
