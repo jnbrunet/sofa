@@ -313,6 +313,19 @@ sofa_add_targets_to_package(
     INCLUDE_INSTALL_DIR "SofaGui"
     )
 
+# Force RPATH instead of RUNPATH to fix relocatable of Qt5Core.so dependencies, i.e. libicui18n.so.60 which is copied
+# into SOFA's package but not found by the linker since it doesn't have a RPATH pointing to SOFA/lib. Forcing RPATH means
+# that the linker will use the RPATH of SofaGuiQt.so which does point towards SOFA/lib.
+# See https://www.qt.io/blog/2011/10/28/rpath-and-runpath for more information on RPATH vs RUNPATH.
+if(UNIX AND NOT APPLE)
+    if(${CMAKE_VERSION} VERSION_LESS "3.13.0")
+        # To be removed when we don't support cmake versions <= 3.12
+        set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-Wl,--disable-new-dtags")
+    else()
+        target_link_options(${PROJECT_NAME} PRIVATE "LINKER:--disable-new-dtags")
+    endif()
+endif()
+
 # Qt deployment
 if(CMAKE_SYSTEM_NAME STREQUAL Windows)
     include(windeployqt)
