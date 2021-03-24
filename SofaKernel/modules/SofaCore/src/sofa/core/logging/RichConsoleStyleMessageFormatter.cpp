@@ -46,18 +46,20 @@ using sofa::helper::logging::SofaComponentInfo;
 
 #include <algorithm>
 
-namespace sofa
-{
+namespace { // Anonymous namespace
 
-namespace helper
-{
+// Adapted from boost:char_separator
+class char_separator;
 
-namespace logging
+// Adapted from boost:tokenizer
+class tokenizer ; // Defined at the end of this file
+
+}
+
+namespace sofa::helper::logging
 {
 
 /////////////////////////////// STATIC ELEMENT SPECIFIC TO RichConsoleStyleMessage /////////////////
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-
 ///
 /// \brief simpleFormat a text containing our markdown 'tags'
 /// \param jsize size of the line prefix to fill with space (for left side alignment)
@@ -72,7 +74,7 @@ void simpleFormat(size_t jsize, const std::string& text, size_t line_length,
 
     /// space and * are separator that are returned in the token flow
     /// while "\n" is a 'hidden' separator.
-    static boost::char_separator<char> sep("\n", "* '");
+    static char_separator sep("\n", "* '");
 
     std::string emptyspace(jsize, ' ') ;
 
@@ -251,7 +253,225 @@ void RichConsoleStyleMessageFormatter::formatMessage(const Message& m, std::ostr
     out << std::endl ;
 }
 
-} // logging
-} // helper
-} // sofa
+} // namespace sofa::helper::logging
 
+namespace { // Anonymous namespace
+
+/** @see boost::empty_token_policy */
+enum empty_token_policy { drop_empty_tokens, keep_empty_tokens };
+
+/** see @boost::tokenizer_detail::traits_extension<traits> */
+template<typename traits>
+struct char_traits : public traits {
+    typedef typename traits::char_type char_type;
+    static bool isspace(char_type c)
+    {
+        return static_cast< unsigned >(c) <= 255 && std::isspace(c) != 0;
+    }
+
+    static bool ispunct(char_type c)
+    {
+        return static_cast< unsigned >(c) <= 255 && std::ispunct(c) != 0;
+    }
+};
+
+/** @see boost::char_separator */
+class char_separator
+{
+    using Char = char;
+    using Tr = std::basic_string<Char>::traits_type;
+    typedef char_traits<Tr> Traits;
+    typedef std::basic_string<Char,Tr> string_type;
+public:
+    explicit
+    char_separator(const Char* dropped_delims,
+                   const Char* kept_delims = 0,
+                   empty_token_policy empty_tokens = drop_empty_tokens)
+            : m_dropped_delims(dropped_delims),
+              m_use_ispunct(false),
+              m_use_isspace(false),
+              m_empty_tokens(empty_tokens),
+              m_output_done(false)
+    {
+        // Borland workaround
+        if (kept_delims)
+            m_kept_delims = kept_delims;
+    }
+
+    // use ispunct() for kept delimiters and isspace for dropped.
+    explicit
+    char_separator()
+            : m_use_ispunct(true),
+              m_use_isspace(true),
+              m_empty_tokens(drop_empty_tokens),
+              m_output_done(false) { }
+
+    void reset() { }
+
+    template <typename InputIterator, typename Token>
+    bool operator()(InputIterator& next, InputIterator end, Token& tok)
+    {
+        typedef tokenizer_detail::assign_or_plus_equal<
+                BOOST_DEDUCED_TYPENAME boost::tokenizer_detail::get_iterator_category<
+                        InputIterator
+                >::iterator_category
+        > assigner;
+
+        assigner::clear(tok);
+
+        // skip past all dropped_delims
+        if (m_empty_tokens == drop_empty_tokens)
+            for (; next != end  && is_dropped(*next); ++next)
+            { }
+
+        InputIterator start(next);
+
+        if (m_empty_tokens == drop_empty_tokens) {
+
+            if (next == end)
+                return false;
+
+
+            // if we are on a kept_delims move past it and stop
+            if (is_kept(*next)) {
+                assigner::plus_equal(tok,*next);
+                ++next;
+            } else
+                // append all the non delim characters
+                for (; next != end && !is_dropped(*next) && !is_kept(*next); ++next)
+                    assigner::plus_equal(tok,*next);
+        }
+        else { // m_empty_tokens == keep_empty_tokens
+
+            // Handle empty token at the end
+            if (next == end)
+            {
+                if (m_output_done == false)
+                {
+                    m_output_done = true;
+                    assigner::assign(start,next,tok);
+                    return true;
+                }
+                else
+                    return false;
+            }
+
+            if (is_kept(*next)) {
+                if (m_output_done == false)
+                    m_output_done = true;
+                else {
+                    assigner::plus_equal(tok,*next);
+                    ++next;
+                    m_output_done = false;
+                }
+            }
+            else if (m_output_done == false && is_dropped(*next)) {
+                m_output_done = true;
+            }
+            else {
+                if (is_dropped(*next))
+                    start=++next;
+                for (; next != end && !is_dropped(*next) && !is_kept(*next); ++next)
+                    assigner::plus_equal(tok,*next);
+                m_output_done = true;
+            }
+        }
+        assigner::assign(start,next,tok);
+        return true;
+    }
+
+private:
+    string_type m_kept_delims;
+    string_type m_dropped_delims;
+    bool m_use_ispunct;
+    bool m_use_isspace;
+    empty_token_policy m_empty_tokens;
+    bool m_output_done;
+
+    bool is_kept(Char E) const
+    {
+        if (m_kept_delims.length())
+            return m_kept_delims.find(E) != string_type::npos;
+        else if (m_use_ispunct) {
+            return Traits::ispunct(E) != 0;
+        } else
+            return false;
+    }
+    bool is_dropped(Char E) const
+    {
+        if (m_dropped_delims.length())
+            return m_dropped_delims.find(E) != string_type::npos;
+        else if (m_use_isspace) {
+            return Traits::isspace(E) != 0;
+        } else
+            return false;
+    }
+};
+
+/** @see boost::tokenizer */
+class tokenizer {
+private:
+    using TokenizerFunc = char_separator;
+    using Iterator = std::string::const_iterator;
+    using  Type = std::string;
+    typedef token_iterator_generator<TokenizerFunc,Iterator,Type> TGen;
+
+    // It seems that MSVC does not like the unqualified use of iterator,
+    // Thus we use iter internally when it is used unqualified and
+    // the users of this class will always qualify iterator.
+    typedef typename TGen::type iter;
+
+public:
+
+    typedef iter iterator;
+    typedef iter const_iterator;
+    typedef Type value_type;
+    typedef value_type& reference;
+    typedef const value_type& const_reference;
+    typedef value_type* pointer;
+    typedef const pointer const_pointer;
+    typedef void size_type;
+    typedef void difference_type;
+
+    tokenizer(Iterator first, Iterator last,
+              const TokenizerFunc& f = TokenizerFunc())
+            : first_(first), last_(last), f_(f) { }
+
+    template <typename Container>
+    tokenizer(const Container& c)
+            : first_(c.begin()), last_(c.end()), f_() { }
+
+    template <typename Container>
+    tokenizer(const Container& c,const TokenizerFunc& f)
+            : first_(c.begin()), last_(c.end()), f_(f) { }
+
+    void assign(Iterator first, Iterator last){
+        first_ = first;
+        last_ = last;
+    }
+
+    void assign(Iterator first, Iterator last, const TokenizerFunc& f){
+        assign(first,last);
+        f_ = f;
+    }
+
+    template <typename Container>
+    void assign(const Container& c){
+        assign(c.begin(),c.end());
+    }
+
+
+    template <typename Container>
+    void assign(const Container& c, const TokenizerFunc& f){
+        assign(c.begin(),c.end(),f);
+    }
+
+    iter begin() const { return iter(f_,first_,last_); }
+    iter end() const { return iter(f_,last_,last_); }
+
+private:
+    Iterator first_;
+    Iterator last_;
+    TokenizerFunc f_;
+};
+}
