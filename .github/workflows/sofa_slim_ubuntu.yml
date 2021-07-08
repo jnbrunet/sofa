@@ -1,0 +1,108 @@
+name: CI Ubuntu
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # run at 2 AM UTC
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    name: Building on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04]
+
+    steps:
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+
+      - name: Getting current SOFA master tag
+        id: sofa_master_tag
+        run: echo "::set-output name=tag::$(git ls-remote https://github.com/sofa-framework/sofa.git HEAD | cut -f1)"
+        
+      - name: Getting last built SOFA tag
+        id: sofa_built_tag
+        shell: python
+        run: |
+          import urllib.request, json, sys, re
+          url = 'https://api.github.com/repos/jnbrunet/sofa/actions/artifacts'
+          req = urllib.request.Request(url)
+          req.add_header('authorization', 'Bearer ${{ secrets.GITHUB_TOKEN }}')
+          r = urllib.request.urlopen(req).read()
+          artifacts = json.loads(r.decode('utf-8'))['artifacts']
+          os_artifacts = filter(lambda a:re.search('${{ matrix.os }}', a['name'], re.I), artifacts)
+          last_artifact = sorted(os_artifacts, reverse=False, key=lambda a:a['created_at'])[-1]
+          last_hash = last_artifact['name'].split('_')[-1]
+          print(f"::set-output name=tag::{last_hash}")
+          
+      - name: Checkout source code
+        uses: actions/checkout@v2
+        if: steps.sofa_master_tag.outputs.tag != steps.sofa_built_tag.outputs.tag
+        with:
+            repository:  sofa-framework/sofa
+            ref: master
+        
+      - name: install requirements
+        if: steps.sofa_master_tag.outputs.tag != steps.sofa_built_tag.outputs.tag
+        run: sudo apt install -qq ccache ninja-build libeigen3-dev libboost-dev libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libboost-thread-dev
+
+      - name: Get Time
+        id: time
+        if: steps.sofa_master_tag.outputs.tag != steps.sofa_built_tag.outputs.tag
+        uses: nanzm/get-time-action@v1.0
+        with:
+          timeZone: 8
+          format: 'YYYY-MM-DD-HH-mm-ss'
+
+      - name: ccache cache files
+        if: steps.sofa_master_tag.outputs.tag != steps.sofa_built_tag.outputs.tag
+        uses: actions/cache@v2
+        with:
+          path: .ccache
+          key: ${{ matrix.os }}-ccache-${{ steps.time.outputs.time }}
+          restore-keys: |
+            ${{ matrix.os }}-ccache-
+
+      - name: Build
+        if: steps.sofa_master_tag.outputs.tag != steps.sofa_built_tag.outputs.tag
+        env:
+          CCACHE_COMPRESS: true
+          CCACHE_COMPRESSLEVEL: 6
+          CCACHE_MAXSIZE: "1G"
+        run: 
+          export CCACHE_BASEDIR=$GITHUB_WORKSPACE
+          && export CCACHE_DIR=$GITHUB_WORKSPACE/.ccache
+          && ccache -z
+          && mkdir build
+          && cd build
+          && cmake 
+              -GNinja
+              -DCMAKE_C_COMPILER_LAUNCHER=ccache
+              -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+              -DCMAKE_BUILD_TYPE=Release
+              -DAPPLICATION_MODELER=OFF
+              -DSOFAGUI_BUILD=OFF
+              -DSOFAGUI_QT=OFF
+              -DSOFA_NO_OPENGL=ON
+              -DSOFA_BUILD_SCENECREATOR=OFF
+              -DSOFA_BUILD_TESTS=ON
+              -DSOFAGUI_BUILD_TESTS=OFF
+              -DSOFA_FLOATING_POINT_TYPE=double
+              -DSOFA_WITH_DEPRECATED_COMPONENTS=OFF
+              ..
+          && ninja 
+          && ninja install
+          && ccache -s
+      - name: Archive production
+        if: steps.sofa_master_tag.outputs.tag != steps.sofa_built_tag.outputs.tag
+        uses: actions/upload-artifact@v2
+        with:
+          name: sofa-slim-${{ matrix.os }}_${{ steps.sofa_master_tag.outputs.tag }}
+          path: build/install
